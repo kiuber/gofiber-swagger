@@ -1,7 +1,7 @@
 package test
 
 import (
-	"TDiblik/gofiber-swagger/gofiberswagger"
+	"github.com/TDiblik/gofiber-swagger/gofiberswagger"
 
 	"github.com/gofiber/fiber/v3"
 )

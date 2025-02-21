@@ -1,4 +1,4 @@
-module TDiblik/gofiber-swagger
+module github.com/TDiblik/gofiber-swagger
 
 go 1.23.6
 
