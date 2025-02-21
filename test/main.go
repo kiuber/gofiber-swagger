@@ -7,12 +7,16 @@ import (
 )
 
 type RequestBody struct {
-	A string
+	A string `validate:"required"`
 	E Embed
 }
 
 type Embed struct {
 	B string
+}
+
+type ResponseBody struct {
+	C string `validate:"required"`
 }
 
 func main() {
@@ -21,10 +25,30 @@ func main() {
 	with_swagger := swagger.NewRouter(app)
 	with_swagger.Get("/", &swagger.RouteInfo{
 		Parameters: swagger.Parameters{
+			swagger.NewQueryParameter("a"),
+			swagger.NewHeaderParameter("a"),
+		},
+		RequestBody: swagger.NewRequestBodyJSON[RequestBody](),
+		Responses: swagger.NewResponses(
+			map[string]*swagger.ResponseRef{
+				"200": swagger.NewResponseJSON[ResponseBody]("ok"),
+				"400": swagger.NewResponseJSON[Embed]("fail"),
+			},
+		),
+	}, func(c fiber.Ctx) error {
+		return c.SendString("Hello, World!")
+	})
+	with_swagger.Post("/", &swagger.RouteInfo{
+		Parameters: swagger.Parameters{
 			swagger.NewPathParameter("a"),
 		},
 		RequestBody: swagger.NewRequestBodyJSON[RequestBody](),
-		Responses:   swagger.NewResponses(swagger.NewResponseJSON[RequestBody]()),
+		Responses: swagger.NewResponses(
+			map[string]*swagger.ResponseRef{
+				"200": swagger.NewResponseJSON[ResponseBody]("ok"),
+				"400": swagger.NewResponseJSON[Embed]("fail"),
+			},
+		),
 	}, func(c fiber.Ctx) error {
 		return c.SendString("Hello, World!")
 	})

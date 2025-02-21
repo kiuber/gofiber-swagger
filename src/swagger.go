@@ -87,7 +87,7 @@ func Register(app *fiber.App, config Config) error {
 		return err
 	}
 
-	if config.CreateSwaggerFiles {
+	if config.CreateSwaggerFiles && !fiber.IsChild() {
 		if config.SwaggerFilesPath == "" {
 			return errors.New("CreateSwaggerFiles was set to true, however SwaggerFilesPaths was left empty.")
 		}
