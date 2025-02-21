@@ -1,4 +1,4 @@
-package swagger
+package gofiberswagger
 
 import (
 	"bytes"
@@ -45,34 +45,24 @@ func Register(app *fiber.App, config Config) error {
 		switch route.Method {
 		case "POST":
 			path_item.Post = operation
-			break
 		case "CONNECT":
 			path_item.Connect = operation
-			break
 		case "DELETE":
 			path_item.Delete = operation
-			break
 		case "GET":
 			path_item.Get = operation
-			break
 		case "HEAD":
 			path_item.Head = operation
-			break
 		case "OPTIONS":
 			path_item.Options = operation
-			break
 		case "PATCH":
 			path_item.Patch = operation
-			break
 		case "PUT":
 			path_item.Put = operation
-			break
 		case "TRACE":
 			path_item.Trace = operation
-			break
 		default:
 			log.Println("gofiber-swagger: unable to translate operation \"", route.Method, "\", skipping...")
-			break
 		}
 
 		config.Swagger.Paths.Set(route.Path, path_item)
@@ -149,19 +139,19 @@ func createSwaggerFiles(target_folder_path string, index_page []byte, schema_as_
 
 	swagger_dir := filepath.Dir(target_folder_path)
 	if err := os.MkdirAll(swagger_dir, creation_perms); err != nil {
-		return errors.Join(errors.New("Unable to create file directory for swagger files."), err)
+		return errors.Join(errors.New("unable to create file directory for swagger files"), err)
 	}
 
 	if err := os.WriteFile(filepath.Join(swagger_dir, "index.html"), index_page, creation_perms); err != nil {
-		return errors.Join(errors.New("Unable to create index.html for swagger files."), err)
+		return errors.Join(errors.New("unable to create index.html for swagger files"), err)
 	}
 
 	if err := os.WriteFile(filepath.Join(swagger_dir, "swagger.json"), schema_as_json, creation_perms); err != nil {
-		return errors.Join(errors.New("Unable to create swagger.json for swagger files."), err)
+		return errors.Join(errors.New("unable to create swagger.json for swagger files"), err)
 	}
 
 	if err := os.WriteFile(filepath.Join(swagger_dir, "swagger.yaml"), schema_as_yaml, creation_perms); err != nil {
-		return errors.Join(errors.New("Unable to create swagger.yaml for swagger files."), err)
+		return errors.Join(errors.New("unable to create swagger.yaml for swagger files"), err)
 	}
 
 	return nil

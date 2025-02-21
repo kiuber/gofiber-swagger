@@ -1,4 +1,4 @@
-package swagger
+package gofiberswagger
 
 import "github.com/getkin/kin-openapi/openapi3"
 

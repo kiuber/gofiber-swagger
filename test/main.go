@@ -1,7 +1,7 @@
-package main
+package test
 
 import (
-	swagger "TDiblik/gofiber-swagger/src"
+	"TDiblik/gofiber-swagger/gofiberswagger"
 
 	"github.com/gofiber/fiber/v3"
 )
@@ -22,31 +22,31 @@ type ResponseBody struct {
 func main() {
 	app := fiber.New()
 
-	with_swagger := swagger.NewRouter(app)
-	with_swagger.Get("/", &swagger.RouteInfo{
-		Parameters: swagger.Parameters{
-			swagger.NewQueryParameter("a"),
-			swagger.NewHeaderParameter("a"),
+	with_swagger := gofiberswagger.NewRouter(app)
+	with_swagger.Get("/", &gofiberswagger.RouteInfo{
+		Parameters: gofiberswagger.Parameters{
+			gofiberswagger.NewQueryParameter("a"),
+			gofiberswagger.NewHeaderParameter("a"),
 		},
-		RequestBody: swagger.NewRequestBodyJSON[RequestBody](),
-		Responses: swagger.NewResponses(
-			map[string]*swagger.ResponseRef{
-				"200": swagger.NewResponseJSON[ResponseBody]("ok"),
-				"400": swagger.NewResponseJSON[Embed]("fail"),
+		RequestBody: gofiberswagger.NewRequestBodyJSON[RequestBody](),
+		Responses: gofiberswagger.NewResponses(
+			map[string]*gofiberswagger.ResponseRef{
+				"200": gofiberswagger.NewResponseJSON[ResponseBody]("ok"),
+				"400": gofiberswagger.NewResponseJSON[Embed]("fail"),
 			},
 		),
 	}, func(c fiber.Ctx) error {
 		return c.SendString("Hello, World!")
 	})
-	with_swagger.Post("/", &swagger.RouteInfo{
-		Parameters: swagger.Parameters{
-			swagger.NewPathParameter("a"),
+	with_swagger.Post("/", &gofiberswagger.RouteInfo{
+		Parameters: gofiberswagger.Parameters{
+			gofiberswagger.NewPathParameter("a"),
 		},
-		RequestBody: swagger.NewRequestBodyJSON[RequestBody](),
-		Responses: swagger.NewResponses(
-			map[string]*swagger.ResponseRef{
-				"200": swagger.NewResponseJSON[ResponseBody]("ok"),
-				"400": swagger.NewResponseJSON[Embed]("fail"),
+		RequestBody: gofiberswagger.NewRequestBodyJSON[RequestBody](),
+		Responses: gofiberswagger.NewResponses(
+			map[string]*gofiberswagger.ResponseRef{
+				"200": gofiberswagger.NewResponseJSON[ResponseBody]("ok"),
+				"400": gofiberswagger.NewResponseJSON[Embed]("fail"),
 			},
 		),
 	}, func(c fiber.Ctx) error {
@@ -66,7 +66,7 @@ func main() {
 		return c.SendString("ABC!")
 	})
 
-	swagger.Register(app, swagger.DefaultConfig)
+	gofiberswagger.Register(app, gofiberswagger.DefaultConfig)
 
 	app.Listen(":3000")
 }

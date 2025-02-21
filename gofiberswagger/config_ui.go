@@ -1,4 +1,4 @@
-package swagger
+package gofiberswagger
 
 import (
 	"html/template"

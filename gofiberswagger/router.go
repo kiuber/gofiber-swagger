@@ -1,4 +1,4 @@
-package swagger
+package gofiberswagger
 
 import "github.com/gofiber/fiber/v3"
 
