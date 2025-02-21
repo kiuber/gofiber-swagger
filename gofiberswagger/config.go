@@ -11,6 +11,7 @@ type Config struct {
 	CreateSwaggerFiles bool
 	SwaggerFilesPath   string
 	AppendMethodToTags bool
+	FilterOutAppUse    bool
 }
 
 var DefaultSwaggerConfig = SwaggerConfig{
@@ -28,6 +29,7 @@ var DefaultConfig = Config{
 	CreateSwaggerFiles: true,
 	SwaggerFilesPath:   "./generated/swagger",
 	AppendMethodToTags: true,
+	FilterOutAppUse:    true,
 }
 
 func swaggerConfigDefault(config SwaggerConfig) SwaggerConfig {

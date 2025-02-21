@@ -1,9 +1,11 @@
-package test
+package main
 
 import (
 	"github.com/TDiblik/gofiber-swagger/gofiberswagger"
 
 	"github.com/gofiber/fiber/v3"
+	"github.com/gofiber/fiber/v3/middleware/cors"
+	"github.com/gofiber/fiber/v3/middleware/logger"
 )
 
 type RequestBody struct {
@@ -22,17 +24,21 @@ type ResponseBody struct {
 func main() {
 	app := fiber.New()
 
-	with_swagger := gofiberswagger.NewRouter(app)
+	app.Use(cors.New())
+	app.Use(logger.New())
+
+	with_swagger_a := gofiberswagger.NewRouter(app)
+	with_swagger := with_swagger_a.Group("/abc/cba/")
 	with_swagger.Get("/", &gofiberswagger.RouteInfo{
 		Parameters: gofiberswagger.Parameters{
 			gofiberswagger.NewQueryParameter("a"),
 			gofiberswagger.NewHeaderParameter("a"),
 		},
 		RequestBody: gofiberswagger.NewRequestBodyJSON[RequestBody](),
-		Responses: gofiberswagger.NewResponses(
+		Responses: gofiberswagger.NewResponsesRaw(
 			map[string]*gofiberswagger.ResponseRef{
-				"200": gofiberswagger.NewResponseJSON[ResponseBody]("ok"),
-				"400": gofiberswagger.NewResponseJSON[Embed]("fail"),
+				"200": gofiberswagger.NewResponseRawJSON[ResponseBody]("ok"),
+				"400": gofiberswagger.NewResponseRawJSON[Embed]("fail"),
 			},
 		),
 	}, func(c fiber.Ctx) error {
@@ -44,10 +50,8 @@ func main() {
 		},
 		RequestBody: gofiberswagger.NewRequestBodyJSON[RequestBody](),
 		Responses: gofiberswagger.NewResponses(
-			map[string]*gofiberswagger.ResponseRef{
-				"200": gofiberswagger.NewResponseJSON[ResponseBody]("ok"),
-				"400": gofiberswagger.NewResponseJSON[Embed]("fail"),
-			},
+			gofiberswagger.NewResponseInfo[ResponseBody]("200", "ok"),
+			gofiberswagger.NewResponseInfo[Embed]("400", "fail"),
 		),
 	}, func(c fiber.Ctx) error {
 		return c.SendString("Hello, World!")

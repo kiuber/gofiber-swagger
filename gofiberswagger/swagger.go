@@ -23,7 +23,7 @@ func Register(app *fiber.App, config Config) error {
 		}
 	}
 
-	routes := app.GetRoutes()
+	routes := app.GetRoutes(config.FilterOutAppUse)
 	for _, route := range routes {
 		path_item := config.Swagger.Paths.Find(route.Path)
 		if path_item == nil {

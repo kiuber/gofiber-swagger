@@ -1,6 +1,8 @@
 package gofiberswagger
 
-import "github.com/gofiber/fiber/v3"
+import (
+	"github.com/gofiber/fiber/v3"
+)
 
 type SwaggerRouter struct {
 	internalGroup string
@@ -51,12 +53,12 @@ func (router SwaggerRouter) Patch(path string, docs *RouteInfo, handler fiber.Ha
 	return router.Router.Patch(path, handler, middleware...)
 }
 func (router *SwaggerRouter) Group(prefix string, handlers ...fiber.Handler) SwaggerRouter {
-	return SwaggerRouter{internalGroup: prefix, Router: router.Router.Group(prefix, handlers...)}
+	return SwaggerRouter{internalGroup: router.internalGroup + prefix, Router: router.Router.Group(prefix, handlers...)}
 }
 
 func routerRegisterPathInternal(method string, path string, internalGroup string, info *RouteInfo) {
 	if info != nil && internalGroup != "" {
 		info.Tags = append(info.Tags, internalGroup)
 	}
-	RegisterPath(method, path, info)
+	RegisterPath(method, internalGroup+path, info)
 }

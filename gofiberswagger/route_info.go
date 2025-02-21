@@ -15,7 +15,7 @@ func RegisterPath(method string, path string, info *RouteInfo) {
 		AcquiredRoutesInfo = make(map[string]*RouteInfo)
 	}
 	if info != nil {
-		AcquiredRoutesInfo[strings.ToUpper(method)+path] = info
+		AcquiredRoutesInfo[getAcquiredRoutesInfoId(method, path)] = info
 	}
 }
 
@@ -23,5 +23,9 @@ func getAcquiredRoutesInfo(method string, path string) *RouteInfo {
 	if AcquiredRoutesInfo == nil {
 		return nil
 	}
-	return AcquiredRoutesInfo[strings.ToUpper(method)+path]
+	return AcquiredRoutesInfo[getAcquiredRoutesInfoId(method, path)]
+}
+
+func getAcquiredRoutesInfoId(method string, path string) string {
+	return strings.ReplaceAll(strings.ReplaceAll(strings.ToUpper(method)+path, " ", ""), "//", "/")
 }

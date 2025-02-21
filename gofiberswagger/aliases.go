@@ -57,6 +57,7 @@ type Tag = openapi3.Tag
 type NewResponsesOption = openapi3.NewResponsesOption
 type AdditionalProperties = openapi3.AdditionalProperties
 
+// ----- Request Body ----- //
 func NewRequestBodyJSON[T any]() *RequestBodyRef {
 	return NewRequestBodyJSONExtended[T]("", false)
 }
@@ -81,14 +82,46 @@ func NewRequestBodyFormDataExtended[T any](description string, required bool) *R
 	return &RequestBodyRef{Ref: schema.Ref, Value: request_body}
 }
 
-func NewResponses(responses map[string]*ResponseRef) *Responses {
+// ----- Response ----- //
+type ResponseInfo struct {
+	Code        string
+	Description string
+	Response    *ResponseRef
+}
+
+func NewResponses(responses ...ResponseInfo) *Responses {
+	output := &Responses{}
+	for _, response := range responses {
+		if response.Response != nil && response.Response.Value != nil && (response.Response.Value.Description == nil || *response.Response.Value.Description == "") && *response.Response.Value.Description != response.Description {
+			response.Response.Value.WithDescription(response.Description)
+		}
+		output.Set(response.Code, response.Response)
+	}
+	return output
+}
+func NewResponseInfo[T any](code string, description string) ResponseInfo {
+	return ResponseInfo{
+		Code:        code,
+		Description: description,
+		Response:    NewResponseRawJSON[T](description),
+	}
+}
+func NewResponseInfoRaw[T any](code string, description string, mediatype string, additonalMediaTypeInfo *MediaType) ResponseInfo {
+	return ResponseInfo{
+		Code:        code,
+		Description: description,
+		Response:    NewResponseRaw[T](mediatype, description, additonalMediaTypeInfo),
+	}
+}
+
+func NewResponsesRaw(responses map[string]*ResponseRef) *Responses {
 	output := &Responses{}
 	for k, v := range responses {
 		output.Set(k, v)
 	}
 	return output
 }
-func NewResponseJSON[T any](description string) *ResponseRef {
+func NewResponseRawJSON[T any](description string) *ResponseRef {
 	response := openapi3.NewResponse()
 	schema := CreateSchema[T]()
 	response.WithJSONSchemaRef(schema)
@@ -96,6 +129,27 @@ func NewResponseJSON[T any](description string) *ResponseRef {
 	return &ResponseRef{Value: response}
 }
 
+func NewResponseRaw[T any](mediaType string, description string, additonalMediaTypeInfo *MediaType) *ResponseRef {
+	response := openapi3.NewResponse()
+
+	if additonalMediaTypeInfo == nil {
+		additonalMediaTypeInfo = &MediaType{}
+	}
+	if additonalMediaTypeInfo.Schema == nil {
+		schema := CreateSchema[T]()
+		additonalMediaTypeInfo.Schema = schema
+	}
+
+	response.WithContent(
+		Content{
+			mediaType: additonalMediaTypeInfo,
+		},
+	)
+	response.WithDescription(description)
+	return &ResponseRef{Value: response}
+}
+
+// ----- Parameter ----- //
 func NewPathParameter(name string) *ParameterRef {
 	return NewPathParameterExtended(name, &Schema{
 		Type: &Types{"string"},
