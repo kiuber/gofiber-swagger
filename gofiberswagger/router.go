@@ -57,7 +57,10 @@ func (router *SwaggerRouter) Group(prefix string, handlers ...fiber.Handler) Swa
 }
 
 func routerRegisterPathInternal(method string, path string, internalGroup string, info *RouteInfo) {
-	if info != nil && internalGroup != "" {
+	if info == nil {
+		info = &RouteInfo{}
+	}
+	if internalGroup != "" {
 		info.Tags = append(info.Tags, internalGroup)
 	}
 	RegisterPath(method, internalGroup+path, info)

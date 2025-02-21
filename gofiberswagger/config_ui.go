@@ -273,7 +273,9 @@ var DefaultUIConfig = SwaggerUIConfig{
 		Activate: true,
 		Theme:    "agate",
 	},
-	ShowMutatedRequest: true,
+	ShowMutatedRequest:     true,
+	DisplayRequestDuration: true,
+	PersistAuthorization:   true,
 }
 
 func swaggerUIConfigDefault(ui_config SwaggerUIConfig) SwaggerUIConfig {

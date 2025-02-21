@@ -14,9 +14,10 @@ func RegisterPath(method string, path string, info *RouteInfo) {
 	if AcquiredRoutesInfo == nil {
 		AcquiredRoutesInfo = make(map[string]*RouteInfo)
 	}
-	if info != nil {
-		AcquiredRoutesInfo[getAcquiredRoutesInfoId(method, path)] = info
+	if info == nil {
+		info = &RouteInfo{}
 	}
+	AcquiredRoutesInfo[getAcquiredRoutesInfoId(method, path)] = info
 }
 
 func getAcquiredRoutesInfo(method string, path string) *RouteInfo {

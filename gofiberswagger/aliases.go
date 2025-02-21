@@ -67,7 +67,7 @@ func NewRequestBodyJSONExtended[T any](description string, required bool) *Reque
 	request_body.WithRequired(required)
 	schema := CreateSchema[T]()
 	request_body.WithJSONSchemaRef(schema)
-	return &RequestBodyRef{Ref: schema.Ref, Value: request_body}
+	return &RequestBodyRef{Value: request_body}
 }
 
 func NewRequestBodyFormData[T any]() *RequestBodyRef {
@@ -79,7 +79,7 @@ func NewRequestBodyFormDataExtended[T any](description string, required bool) *R
 	request_body.WithRequired(required)
 	schema := CreateSchema[T]()
 	request_body.WithFormDataSchemaRef(schema)
-	return &RequestBodyRef{Ref: schema.Ref, Value: request_body}
+	return &RequestBodyRef{Value: request_body}
 }
 
 // ----- Response ----- //

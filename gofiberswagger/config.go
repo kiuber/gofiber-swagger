@@ -6,12 +6,14 @@ import "github.com/getkin/kin-openapi/openapi3"
 type SwaggerConfig = openapi3.T
 
 type Config struct {
-	Swagger            SwaggerConfig
-	SwaggerUI          SwaggerUIConfig
-	CreateSwaggerFiles bool
-	SwaggerFilesPath   string
-	AppendMethodToTags bool
-	FilterOutAppUse    bool
+	Swagger                  SwaggerConfig
+	SwaggerUI                SwaggerUIConfig
+	CreateSwaggerFiles       bool
+	SwaggerFilesPath         string
+	AppendMethodToTags       bool
+	FilterOutAppUse          bool
+	RequiredAuth             *openapi3.SecurityRequirements
+	AutomaticallyRequireAuth bool
 }
 
 var DefaultSwaggerConfig = SwaggerConfig{
@@ -24,12 +26,14 @@ var DefaultSwaggerConfig = SwaggerConfig{
 	Paths:      &Paths{},
 }
 var DefaultConfig = Config{
-	Swagger:            DefaultSwaggerConfig,
-	SwaggerUI:          DefaultUIConfig,
-	CreateSwaggerFiles: true,
-	SwaggerFilesPath:   "./generated/swagger",
-	AppendMethodToTags: true,
-	FilterOutAppUse:    true,
+	Swagger:                  DefaultSwaggerConfig,
+	SwaggerUI:                DefaultUIConfig,
+	CreateSwaggerFiles:       true,
+	SwaggerFilesPath:         "./generated/swagger",
+	AppendMethodToTags:       false,
+	FilterOutAppUse:          true,
+	RequiredAuth:             nil,
+	AutomaticallyRequireAuth: false,
 }
 
 func swaggerConfigDefault(config SwaggerConfig) SwaggerConfig {

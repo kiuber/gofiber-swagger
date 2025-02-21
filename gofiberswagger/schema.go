@@ -1,6 +1,7 @@
 package gofiberswagger
 
 import (
+	"path"
 	"reflect"
 	"strings"
 )
@@ -38,9 +39,18 @@ func generateSchema(t reflect.Type) *SchemaRef {
 		t = t.Elem()
 	}
 
-	ref := t.PkgPath() + t.Name()
+	ref := path.Base(t.PkgPath()) + t.Name()
+	ref_path := "#/components/schemas/" + ref
 	possibleSchema := getAcquiredSchemas(ref)
 	if possibleSchema != nil {
+		if t.Kind() == reflect.Struct {
+			return &SchemaRef{
+				Ref:        ref_path,
+				Extensions: possibleSchema.Extensions,
+				Origin:     possibleSchema.Origin,
+				Value:      possibleSchema.Value,
+			}
+		}
 		return possibleSchema
 	}
 
@@ -123,8 +133,8 @@ func generateSchema(t reflect.Type) *SchemaRef {
 			Value: schema,
 		})
 		return &SchemaRef{
+			Ref:   ref_path,
 			Value: schema,
-			Ref:   "#/components/schemas/" + ref,
 		}
 	}
 

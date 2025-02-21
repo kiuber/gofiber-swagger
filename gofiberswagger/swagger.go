@@ -42,6 +42,19 @@ func Register(app *fiber.App, config Config) error {
 			operation.Tags = append(operation.Tags, route.Method)
 		}
 
+		if config.AutomaticallyRequireAuth && config.RequiredAuth != nil {
+			if operation.Security == nil {
+				operation.Security = &openapi3.SecurityRequirements{}
+			}
+			for _, v := range *config.RequiredAuth {
+				operation.Security.With(v)
+			}
+		}
+
+		if operation.Responses == nil {
+			operation.Responses = &Responses{}
+		}
+
 		switch route.Method {
 		case "POST":
 			path_item.Post = operation
