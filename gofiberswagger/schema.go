@@ -1,7 +1,6 @@
 package gofiberswagger
 
 import (
-	"path"
 	"reflect"
 	"strings"
 )
@@ -39,7 +38,7 @@ func generateSchema(t reflect.Type) *SchemaRef {
 		t = t.Elem()
 	}
 
-	ref := path.Base(t.PkgPath()) + t.Name()
+	ref := strings.ReplaceAll(strings.ReplaceAll(t.PkgPath(), "/", "_"), ".", "_") + t.Name()
 	ref_path := "#/components/schemas/" + ref
 	possibleSchema := getAcquiredSchemas(ref)
 	if possibleSchema != nil {
@@ -61,49 +60,105 @@ func generateSchema(t reflect.Type) *SchemaRef {
 		Required:   []string{},
 	}
 
-	// todo: recognize name form `json:""` tag
-
 	if t.Kind() == reflect.Struct {
 		schema.Title = t.Name()
 		for i := 0; i < t.NumField(); i++ {
 			field := t.Field(i)
+
 			fieldType := field.Type
 			if fieldType.Kind() == reflect.Pointer {
 				fieldType = fieldType.Elem()
 			}
 
-			// Check if field is required using the validate tag
-			validateTag := field.Tag.Get("validate")
-			if isFieldRequired(validateTag) {
-				schema.Required = append(schema.Required, field.Name)
-			}
+			fieldName := field.Name
+			field_schema_additonal_info := &Schema{}
 
-			// Recursively resolve struct fields
-			if fieldType.Kind() == reflect.Struct {
-				fieldSchema := generateSchema(fieldType)
-				schema.Properties[field.Name] = fieldSchema
+			// handle json tag
+			jsonTag := field.Tag.Get("json")
+			if jsonTag == "-" {
 				continue
 			}
+			jsonOptions := strings.Split(jsonTag, ",")
+			if len(jsonOptions) > 0 {
+				if jsonOptions[0] != "" {
+					field_schema_additonal_info.Title = fieldName
+					fieldName = jsonOptions[0]
+				}
 
-			// Handle slices and arrays
-			if fieldType.Kind() == reflect.Slice || fieldType.Kind() == reflect.Array {
-				itemSchema := generateSchema(fieldType.Elem())
-				schema.Properties[field.Name] = &SchemaRef{
+				for i := 1; i < len(jsonOptions); i++ {
+					option := jsonOptions[i]
+					switch option {
+					case "string":
+						field_schema_additonal_info.Type = &Types{"string"}
+					case "omitempty":
+						field_schema_additonal_info.Description += "omitempty"
+					case "omitzero":
+						field_schema_additonal_info.Description += "omitzero"
+					}
+				}
+			}
+
+			// handle validate tag
+			validateTag := field.Tag.Get("validate")
+			validationOptions := strings.Split(validateTag, ",")
+			for _, validation := range validationOptions {
+				switch {
+				case validation == "required":
+					schema.Required = append(schema.Required, fieldName)
+				// case strings.HasPrefix(validation, "min="):
+				// 	minValue := strings.TrimPrefix(validation, "min=")
+				// 	field_schema_additonal_info.Min = minValue
+				// case strings.HasPrefix(validation, "max="):
+				// 	maxValue := strings.TrimPrefix(validation, "max=")
+				// 	field_schema_additonal_info.Max = maxValue
+				// case strings.HasPrefix(validation, "minLength="):
+				// 	minLen := strings.TrimPrefix(validation, "minLength=")
+				// 	field_schema_additonal_info.MinLength = minLen
+				// case strings.HasPrefix(validation, "maxLength="):
+				// 	maxLen := strings.TrimPrefix(validation, "maxLength=")
+				// 	field_schema_additonal_info.MaxLength = maxLen
+				// case strings.HasPrefix(validation, "pattern="):
+				// 	pattern := strings.TrimPrefix(validation, "pattern=")
+				// 	field_schema_additonal_info.Pattern = pattern
+				// case strings.HasPrefix(validation, "enum="):
+				// 	enumValues := strings.TrimPrefix(validation, "enum=")
+				// 	field_schema_additonal_info.Enum = strings.Split(enumValues, "|")
+				// case strings.HasPrefix(validation, "minItems="):
+				// 	minItems := strings.TrimPrefix(validation, "minItems=")
+				// 	field_schema_additonal_info.MinItems = minItems
+				// case strings.HasPrefix(validation, "maxItems="):
+				// 	maxItems := strings.TrimPrefix(validation, "maxItems=")
+				// 	field_schema_additonal_info.MaxItems = maxItems
+				// case strings.HasPrefix(validation, "uniqueItems"):
+				// 	field_schema_additonal_info.UniqueItems = true
+				// case strings.HasPrefix(validation, "multipleOf="):
+				// 	multipleOf := strings.TrimPrefix(validation, "multipleOf=")
+				// 	field_schema_additonal_info.MultipleOf = multipleOf
+				default:
+					continue
+				}
+			}
+
+			// create schema for the field
+			var result *SchemaRef = nil
+			switch fieldType.Kind() {
+			case reflect.Struct:
+				result = generateSchema(fieldType)
+
+			case reflect.Slice, reflect.Array:
+				result = &SchemaRef{
 					Value: &Schema{
 						Type:  &Types{"array"},
-						Items: itemSchema,
+						Items: generateSchema(fieldType.Elem()),
 					},
 				}
-				continue
-			}
 
-			// Handle maps as objects with additional properties
-			if fieldType.Kind() == reflect.Map {
+			case reflect.Map:
 				keyType := fieldType.Key().Kind()
 				if keyType == reflect.String {
 					valueSchema := generateSchema(fieldType.Elem())
 					has := true
-					schema.Properties[field.Name] = &SchemaRef{
+					result = &SchemaRef{
 						Value: &Schema{
 							Type: &Types{"object"},
 							AdditionalProperties: AdditionalProperties{
@@ -113,24 +168,36 @@ func generateSchema(t reflect.Type) *SchemaRef {
 						},
 					}
 				} else {
-					// Unsupported key type
-					schema.Properties[field.Name] = &SchemaRef{
+					result = &SchemaRef{
 						Value: &Schema{
 							Type: &Types{"object"},
 						},
 					}
 				}
-				continue
+
+			default:
+				result = &SchemaRef{
+					Value: &Schema{
+						Type:   &Types{getTypeString(fieldType)},
+						Format: getFormatString(fieldType),
+					},
+				}
 			}
 
-			// Inline other field types
-			schema.Properties[field.Name] = &SchemaRef{
-				Value: &Schema{
-					Type:   &Types{getTypeString(fieldType)},
-					Format: getFormatString(fieldType),
-				},
+			// overwrite result with aditional preset info taken from tags
+			if field_schema_additonal_info.Title != "" {
+				result.Value.Title = field_schema_additonal_info.Title
 			}
+			if field_schema_additonal_info.Type != nil {
+				result.Value.Type = field_schema_additonal_info.Type
+			}
+			if field_schema_additonal_info.Description != "" {
+				result.Value.Description += field_schema_additonal_info.Description
+			}
+
+			schema.Properties[fieldName] = result
 		}
+
 		appendToAcquiredSchemas(ref, &SchemaRef{
 			Value: schema,
 		})
