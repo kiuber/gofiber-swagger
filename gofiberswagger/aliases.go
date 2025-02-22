@@ -229,3 +229,60 @@ func NewHeaderParameterRaw(name string) *Parameter {
 func NewCookieParameterRaw(name string) *Parameter {
 	return openapi3.NewCookieParameter(name)
 }
+
+// ----- Schema ----- //
+func NewOneOfSchema(schemas ...*Schema) *Schema {
+	return openapi3.NewOneOfSchema(schemas...)
+}
+
+func NewAnyOfSchema(schemas ...*Schema) *Schema {
+	return openapi3.NewAnyOfSchema(schemas...)
+}
+
+func NewAllOfSchema(schemas ...*Schema) *Schema {
+	return openapi3.NewAllOfSchema(schemas...)
+}
+
+func NewBoolSchema() *Schema {
+	return openapi3.NewBoolSchema()
+}
+
+func NewFloat64Schema() *Schema {
+	return openapi3.NewFloat64Schema()
+}
+
+func NewIntegerSchema() *Schema {
+	return openapi3.NewIntegerSchema()
+}
+
+func NewInt32Schema() *Schema {
+	return openapi3.NewInt32Schema()
+}
+
+func NewInt64Schema() *Schema {
+	return openapi3.NewInt64Schema()
+}
+
+func NewStringSchema() *Schema {
+	return openapi3.NewStringSchema()
+}
+
+func NewDateTimeSchema() *Schema {
+	return openapi3.NewDateTimeSchema()
+}
+
+func NewUUIDSchema() *Schema {
+	return openapi3.NewUUIDSchema()
+}
+
+func NewBytesSchema() *Schema {
+	return openapi3.NewBytesSchema()
+}
+
+func NewArraySchema() *Schema {
+	return openapi3.NewArraySchema()
+}
+
+func NewObjectSchema() *Schema {
+	return openapi3.NewObjectSchema()
+}

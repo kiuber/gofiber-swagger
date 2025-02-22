@@ -61,6 +61,8 @@ func generateSchema(t reflect.Type) *SchemaRef {
 		Required:   []string{},
 	}
 
+	// todo: recognize name form `json:""` tag
+
 	if t.Kind() == reflect.Struct {
 		schema.Title = t.Name()
 		for i := 0; i < t.NumField(); i++ {

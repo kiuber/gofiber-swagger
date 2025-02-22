@@ -7,6 +7,7 @@ import (
 	"log"
 	"os"
 	"path/filepath"
+	"strings"
 
 	"github.com/getkin/kin-openapi/openapi3"
 	"github.com/gofiber/fiber/v3"
@@ -25,18 +26,23 @@ func Register(app *fiber.App, config Config) error {
 
 	routes := app.GetRoutes(config.FilterOutAppUse)
 	for _, route := range routes {
-		path_item := config.Swagger.Paths.Find(route.Path)
-		if path_item == nil {
-			path_item = &openapi3.PathItem{}
-		}
-
 		operation := getAcquiredRoutesInfo(route.Method, route.Path)
 		if operation == nil {
 			operation = &RouteInfo{}
 		}
 
-		for _, param := range route.Params {
-			operation.AddParameter(openapi3.NewPathParameter(param))
+		corrected_path := route.Path
+		for _, param_name := range route.Params {
+			parameter := NewPathParameter(param_name)
+			parameter.Value = parameter.Value.WithSchema(NewStringSchema())
+			operation.AddParameter(parameter.Value)
+
+			corrected_path = strings.Replace(corrected_path, ":"+param_name, "{"+param_name+"}", 1)
+
+			// todo: implement correcting the path (also include +)
+			if param_name[0] == '*' {
+				log.Println(param_name)
+			}
 		}
 		if config.AppendMethodToTags {
 			operation.Tags = append(operation.Tags, route.Method)
@@ -55,6 +61,10 @@ func Register(app *fiber.App, config Config) error {
 			operation.Responses = &Responses{}
 		}
 
+		path_item := config.Swagger.Paths.Find(corrected_path)
+		if path_item == nil {
+			path_item = &openapi3.PathItem{}
+		}
 		switch route.Method {
 		case "POST":
 			path_item.Post = operation
@@ -77,8 +87,7 @@ func Register(app *fiber.App, config Config) error {
 		default:
 			log.Println("gofiber-swagger: unable to translate operation \"", route.Method, "\", skipping...")
 		}
-
-		config.Swagger.Paths.Set(route.Path, path_item)
+		config.Swagger.Paths.Set(corrected_path, path_item)
 	}
 
 	index_page, err := generateIndexPage(swaggerUIConfigDefault(config.SwaggerUI))
@@ -98,9 +107,12 @@ func Register(app *fiber.App, config Config) error {
 	}
 
 	swagger_routes := app.Group("/swagger")
-	swagger_routes.Get("/", func(c fiber.Ctx) error {
+	index_handler := func(c fiber.Ctx) error {
 		return c.Type("html").Send(index_page)
-	})
+	}
+	swagger_routes.Get("/", index_handler)
+	swagger_routes.Get("/index.html", index_handler)
+	swagger_routes.Get("/swagger", index_handler)
 	swagger_routes.Get("/swagger.json", func(c fiber.Ctx) error {
 		return c.Type("json").Send(schema_as_json)
 	})
