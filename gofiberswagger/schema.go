@@ -114,6 +114,13 @@ func generateSchema(t reflect.Type) *SchemaRef {
 						Format: "byte",
 					}}
 				}
+			case fieldKind == reflect.Array && fieldType.Name() == "UUID" && fieldType.Elem().Kind() == reflect.Uint8: // could also add fieldType.Len() == 16, to be 100% sure, however it's not necessary atm
+				result = &SchemaRef{
+					Value: &Schema{
+						Type:   &Types{"string"},
+						Format: "uuid",
+					},
+				}
 			case fieldKind == reflect.Slice, fieldKind == reflect.Array:
 				result = &SchemaRef{
 					Value: &Schema{
@@ -289,6 +296,13 @@ func getDefaultSchema(t reflect.Type) *Schema {
 
 	case reflect.String:
 		schema.Type = &Types{"string"}
+
+	case reflect.Array:
+		if t.Name() == "UUID" && t.Elem().Kind() == reflect.Uint8 {
+			schema.Type = &Types{"string"}
+			schema.Format = "uuid"
+		}
 	}
+
 	return &schema
 }
