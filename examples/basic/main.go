@@ -41,7 +41,7 @@ func main() {
 	req_body_group.Post("/", &gofiberswagger.RouteInfo{
 		RequestBody: gofiberswagger.NewRequestBodyJSON[HandlerWithRequestBodyRequest](),
 		Responses: gofiberswagger.NewResponses(
-			gofiberswagger.NewResponseInfo[HandlerWithIdResponse]("200", "example response 👀"),
+			gofiberswagger.NewResponseInfo[HandlerWithBodyResponse]("200", "example response 👀"),
 		),
 	}, HandlerWithRequestBody)
 
