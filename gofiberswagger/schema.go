@@ -1,9 +1,12 @@
 package gofiberswagger
 
 import (
+	"math/rand/v2"
 	"reflect"
 	"strconv"
 	"strings"
+
+	"github.com/google/uuid"
 )
 
 var acquiredSchemas map[string]*SchemaRef
@@ -39,7 +42,20 @@ func generateSchema(t reflect.Type) *SchemaRef {
 		t = t.Elem()
 	}
 
-	ref := strings.ReplaceAll(strings.ReplaceAll(t.PkgPath(), "/", "_"), ".", "_") + t.Name()
+	tName := t.Name()
+	if tName == "" {
+		var genPartOfName string
+
+		if genPart, err := uuid.NewUUID(); err == nil {
+			genPartOfName = genPart.String()
+		} else {
+			genPartOfName = strconv.Itoa(rand.Int())
+		}
+
+		tName = "generated-" + genPartOfName
+	}
+
+	ref := strings.ReplaceAll(strings.ReplaceAll(t.PkgPath(), "/", "_"), ".", "_") + tName
 	ref_path := "#/components/schemas/" + ref
 	possibleSchema := getAcquiredSchemas(ref)
 	if possibleSchema != nil {
@@ -57,7 +73,7 @@ func generateSchema(t reflect.Type) *SchemaRef {
 	schema := getDefaultSchema(t)
 
 	if t.Kind() == reflect.Struct {
-		schema.Title = t.Name()
+		schema.Title = tName
 		for i := 0; i < t.NumField(); i++ {
 			field := t.Field(i)
 
