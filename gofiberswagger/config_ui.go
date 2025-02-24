@@ -19,7 +19,7 @@ type SwaggerUIConfig struct {
 	ConfigURL string `json:"configUrl,omitempty"`
 
 	// The URL pointing to API definition (normally swagger.json or swagger.yaml).
-	// default: "doc.json"
+	// default: "/swagger/swagger.yaml"
 	URL string `json:"url,omitempty"`
 
 	// Enables overriding configuration parameters via URL search params.
@@ -280,6 +280,10 @@ var DefaultUIConfig = SwaggerUIConfig{
 
 func swaggerUIConfigDefault(ui_config SwaggerUIConfig) SwaggerUIConfig {
 	cfg := ui_config
+
+	if cfg.URL == "" {
+		cfg.URL = DefaultUIConfig.URL
+	}
 
 	if cfg.Title == "" {
 		cfg.Title = DefaultUIConfig.Title
