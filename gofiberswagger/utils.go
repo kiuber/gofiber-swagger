@@ -8,9 +8,9 @@ import (
 	"time"
 )
 
-/// ------------------------------------------------------------------ ///
-/// Function / constants that are usefull for internal & general usage ///
-/// ------------------------------------------------------------------ ///
+/// ------------------------------------------------------------------- ///
+/// Functions / constants that are usefull for internal & general usage ///
+/// ------------------------------------------------------------------- ///
 
 var (
 	timeType       = reflect.TypeOf(time.Time{})
