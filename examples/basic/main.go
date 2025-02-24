@@ -46,7 +46,6 @@ func main() {
 	}, HandlerWithRequestBody)
 
 	// Register swagger. Without this line, nothing will get generated.
-	// You probably want to skip this line for production builds.
 	gofiberswagger.Register(app, gofiberswagger.DefaultConfig)
 
 	app.Listen(":3000")

@@ -1,27 +1,3 @@
-# Golang Fiber Swagger generation
-
-### What
-
-This library generates swagger documentation based on your codebase. It generates as much as possible, so you can just drop it in. However, if you want to customize it, it's basically a wrapper around [github.com/getkin/kin-openapi](https://github.com/getkin/kin-openapi) (with re-exported types) for the [fiber web framework](https://gofiber.io/), so you can let your wildest openapi dreams come true haha.
-
-### How
-
-It uses context from `fiber.App` to generate routes with parameters and then uses additional context provided (types) by the user of the library to generate `openapi` schemas using reflection.
-
-You can either:
-
-- a) Use the `gofiberswagger.NewRouter` to create a router which acts like the `fiber.Router`, but takes `*RouteInfo` for swagger docs as the second argument.
-- b) Use the `gofiberswagger.RegisterRoute` function to manually register a route and it's info.
-
-### Why
-
-I really, really, really, hate defining the swagger docs using [swaggo/swag](https://github.com/swaggo/swag). It's a cool project and you should totally check it out, but it just isn't for me.
-
-### Example
-
-Here's an example that showcases most of the features provided. You can find many more examples in the `/examples/` directory
-
-```go
 package main
 
 import (
@@ -115,9 +91,3 @@ func POSTHandlerWithId(c fiber.Ctx) error {
 	}
 	return c.Status(200).JSON(response)
 }
-
-```
-
-### Notes
-
-Even though this library is in the early stages of development, from my personal experience, it's quite stable 🤷‍♂️.
