@@ -10,7 +10,7 @@ type RouteInfo = openapi3.Operation
 
 var acquiredRoutesInfo map[string]*RouteInfo
 
-func RegisterPath(method string, path string, info *RouteInfo) {
+func RegisterRoute(method string, path string, info *RouteInfo) {
 	if acquiredRoutesInfo == nil {
 		acquiredRoutesInfo = make(map[string]*RouteInfo)
 	}

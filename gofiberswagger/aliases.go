@@ -150,6 +150,20 @@ func NewResponseRaw[T any](mediaType string, description string, additonalMediaT
 }
 
 // ----- Parameter ----- //
+func NewParameters(parameters ...*ParameterRef) Parameters {
+	result := Parameters{}
+	for _, parameter := range parameters {
+		result = append(result, parameter)
+	}
+	return result
+}
+
+func INewPathParameter[T any](name string) *ParameterRef {
+	param_raw := openapi3.NewPathParameter(name)
+	param_raw.Schema = CreateSchema[T]()
+	return &ParameterRef{Value: param_raw}
+}
+
 func NewPathParameter(name string) *ParameterRef {
 	return NewPathParameterExtended(name, &Schema{
 		Type: &Types{"string"},
@@ -164,6 +178,12 @@ func NewPathParameterWithType(name string, Type string) *ParameterRef {
 
 func NewPathParameterExtended(name string, schema *Schema) *ParameterRef {
 	return &ParameterRef{Value: openapi3.NewPathParameter(name).WithSchema(schema)}
+}
+
+func INewQueryParameter[T any](name string) *ParameterRef {
+	param_raw := openapi3.NewQueryParameter(name)
+	param_raw.Schema = CreateSchema[T]()
+	return &ParameterRef{Value: param_raw}
 }
 
 func NewQueryParameter(name string) *ParameterRef {
@@ -182,6 +202,12 @@ func NewQueryParameterExtended(name string, schema *Schema) *ParameterRef {
 	return &ParameterRef{Value: openapi3.NewQueryParameter(name).WithSchema(schema)}
 }
 
+func INewHeaderParameter[T any](name string) *ParameterRef {
+	param_raw := openapi3.NewHeaderParameter(name)
+	param_raw.Schema = CreateSchema[T]()
+	return &ParameterRef{Value: param_raw}
+}
+
 func NewHeaderParameter(name string) *ParameterRef {
 	return NewHeaderParameterExtended(name, &Schema{
 		Type: &Types{"string"},
@@ -196,6 +222,12 @@ func NewHeaderParameterWithType(name string, Type string) *ParameterRef {
 
 func NewHeaderParameterExtended(name string, schema *Schema) *ParameterRef {
 	return &ParameterRef{Value: openapi3.NewHeaderParameter(name).WithSchema(schema)}
+}
+
+func INewCookieParameter[T any](name string) *ParameterRef {
+	param_raw := openapi3.NewCookieParameter(name)
+	param_raw.Schema = CreateSchema[T]()
+	return &ParameterRef{Value: param_raw}
 }
 
 func NewCookieParameter(name string) *ParameterRef {

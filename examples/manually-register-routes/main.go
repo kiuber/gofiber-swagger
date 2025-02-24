@@ -17,9 +17,9 @@ func main() {
 	app.Get("/", HelloHandler)
 	app.Get("/abc", HelloHandler)
 	app.Get("/bca", HelloHandler)
-	gofiberswagger.RegisterPath("GET", "/", &gofiberswagger.RouteInfo{})
-	gofiberswagger.RegisterPath("GET", "/abc", &gofiberswagger.RouteInfo{})
-	gofiberswagger.RegisterPath("GET", "/bca", &gofiberswagger.RouteInfo{})
+	gofiberswagger.RegisterRoute("GET", "/", &gofiberswagger.RouteInfo{})
+	gofiberswagger.RegisterRoute("GET", "/abc", &gofiberswagger.RouteInfo{})
+	gofiberswagger.RegisterRoute("GET", "/bca", &gofiberswagger.RouteInfo{})
 
 	gofiberswagger.Register(app, gofiberswagger.DefaultConfig)
 

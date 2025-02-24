@@ -17,51 +17,51 @@ func NewRouterFromRouter(r fiber.Router) SwaggerRouter {
 }
 
 func (router SwaggerRouter) Get(path string, docs *RouteInfo, handler fiber.Handler, middleware ...fiber.Handler) fiber.Router {
-	routerRegisterPathInternal("GET", path, router.internalGroup, docs)
+	routerRegisterRouteInternal("GET", path, router.internalGroup, docs)
 	return router.Router.Get(path, handler, middleware...)
 }
 func (router SwaggerRouter) Head(path string, docs *RouteInfo, handler fiber.Handler, middleware ...fiber.Handler) fiber.Router {
-	routerRegisterPathInternal("HEAD", path, router.internalGroup, docs)
+	routerRegisterRouteInternal("HEAD", path, router.internalGroup, docs)
 	return router.Router.Head(path, handler, middleware...)
 }
 func (router SwaggerRouter) Post(path string, docs *RouteInfo, handler fiber.Handler, middleware ...fiber.Handler) fiber.Router {
-	routerRegisterPathInternal("POST", path, router.internalGroup, docs)
+	routerRegisterRouteInternal("POST", path, router.internalGroup, docs)
 	return router.Router.Post(path, handler, middleware...)
 }
 func (router SwaggerRouter) Put(path string, docs *RouteInfo, handler fiber.Handler, middleware ...fiber.Handler) fiber.Router {
-	routerRegisterPathInternal("PUT", path, router.internalGroup, docs)
+	routerRegisterRouteInternal("PUT", path, router.internalGroup, docs)
 	return router.Router.Put(path, handler, middleware...)
 }
 func (router SwaggerRouter) Delete(path string, docs *RouteInfo, handler fiber.Handler, middleware ...fiber.Handler) fiber.Router {
-	routerRegisterPathInternal("DELETE", path, router.internalGroup, docs)
+	routerRegisterRouteInternal("DELETE", path, router.internalGroup, docs)
 	return router.Router.Delete(path, handler, middleware...)
 }
 func (router SwaggerRouter) Connect(path string, docs *RouteInfo, handler fiber.Handler, middleware ...fiber.Handler) fiber.Router {
-	routerRegisterPathInternal("CONNECT", path, router.internalGroup, docs)
+	routerRegisterRouteInternal("CONNECT", path, router.internalGroup, docs)
 	return router.Router.Connect(path, handler, middleware...)
 }
 func (router SwaggerRouter) Options(path string, docs *RouteInfo, handler fiber.Handler, middleware ...fiber.Handler) fiber.Router {
-	routerRegisterPathInternal("OPTIONS", path, router.internalGroup, docs)
+	routerRegisterRouteInternal("OPTIONS", path, router.internalGroup, docs)
 	return router.Router.Options(path, handler, middleware...)
 }
 func (router SwaggerRouter) Trace(path string, docs *RouteInfo, handler fiber.Handler, middleware ...fiber.Handler) fiber.Router {
-	routerRegisterPathInternal("TRACE", path, router.internalGroup, docs)
+	routerRegisterRouteInternal("TRACE", path, router.internalGroup, docs)
 	return router.Router.Trace(path, handler, middleware...)
 }
 func (router SwaggerRouter) Patch(path string, docs *RouteInfo, handler fiber.Handler, middleware ...fiber.Handler) fiber.Router {
-	routerRegisterPathInternal("PATCH", path, router.internalGroup, docs)
+	routerRegisterRouteInternal("PATCH", path, router.internalGroup, docs)
 	return router.Router.Patch(path, handler, middleware...)
 }
 func (router *SwaggerRouter) Group(prefix string, handlers ...fiber.Handler) SwaggerRouter {
 	return SwaggerRouter{internalGroup: router.internalGroup + prefix, Router: router.Router.Group(prefix, handlers...)}
 }
 
-func routerRegisterPathInternal(method string, path string, internalGroup string, info *RouteInfo) {
+func routerRegisterRouteInternal(method string, path string, internalGroup string, info *RouteInfo) {
 	if info == nil {
 		info = &RouteInfo{}
 	}
 	if internalGroup != "" {
 		info.Tags = append(info.Tags, internalGroup)
 	}
-	RegisterPath(method, internalGroup+path, info)
+	RegisterRoute(method, internalGroup+path, info)
 }
