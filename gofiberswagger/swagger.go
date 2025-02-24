@@ -19,7 +19,7 @@ func Register(app *fiber.App, config Config) error {
 	config.Swagger = swaggerConfigDefault(config.Swagger)
 	config.SwaggerUI = swaggerUIConfigDefault(config.SwaggerUI)
 
-	for k, v := range AcquiredSchemas {
+	for k, v := range acquiredSchemas {
 		if config.Swagger.Components.Schemas[k] == nil {
 			config.Swagger.Components.Schemas[k] = v
 		}

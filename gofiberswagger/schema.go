@@ -6,22 +6,22 @@ import (
 	"strings"
 )
 
-var AcquiredSchemas map[string]*SchemaRef
+var acquiredSchemas map[string]*SchemaRef
 
 func appendToAcquiredSchemas(ref string, schema *SchemaRef) {
-	if AcquiredSchemas == nil {
-		AcquiredSchemas = make(map[string]*SchemaRef)
+	if acquiredSchemas == nil {
+		acquiredSchemas = make(map[string]*SchemaRef)
 	}
 	if schema != nil {
-		AcquiredSchemas[ref] = schema
+		acquiredSchemas[ref] = schema
 	}
 }
 func getAcquiredSchemas(ref string) *SchemaRef {
-	if AcquiredSchemas == nil {
+	if acquiredSchemas == nil {
 		return nil
 	}
 
-	schema := AcquiredSchemas[ref]
+	schema := acquiredSchemas[ref]
 	if schema == nil {
 		return nil
 	}
@@ -54,43 +54,51 @@ func generateSchema(t reflect.Type) *SchemaRef {
 		return possibleSchema
 	}
 
-	schema := &Schema{
-		Type:       &Types{getTypeString(t)},
-		Format:     getFormatString(t),
-		Properties: make(Schemas),
-		Required:   []string{},
-	}
+	schema := getDefaultSchema(t)
 
 	if t.Kind() == reflect.Struct {
 		schema.Title = t.Name()
 		for i := 0; i < t.NumField(); i++ {
 			field := t.Field(i)
 
-			fieldType := field.Type
-			fieldKind := fieldType.Kind()
-			if fieldKind == reflect.Pointer {
-				fieldType = fieldType.Elem()
-			}
-
-			fieldName := field.Name
-
-			// handle json tag
 			jsonTag := field.Tag.Get("json")
 			if jsonTag == "-" {
 				continue
 			}
-			jsonTagOptions := strings.Split(jsonTag, ",")
-			if len(jsonTagOptions) > 0 && jsonTagOptions[0] != "" {
-				fieldName = jsonTagOptions[0]
+
+			fieldType := field.Type
+			fieldKind := fieldType.Kind()
+			isNullable := false
+			if fieldKind == reflect.Pointer {
+				fieldKind = fieldType.Elem().Kind()
+				fieldType = fieldType.Elem()
+				isNullable = true
 			}
 
 			// create schema for the field
 			var result *SchemaRef = nil
-			switch fieldKind {
-			case reflect.Struct:
+			switch {
+			case fieldKind == reflect.Func, fieldKind == reflect.Chan:
+				continue
+
+			case fieldKind == reflect.Struct && fieldType == timeType:
+				result = &SchemaRef{Value: &Schema{
+					Type:   &Types{"string"},
+					Format: "date-time",
+				}}
+			case fieldKind == reflect.Struct:
 				result = generateSchema(fieldType)
 
-			case reflect.Slice, reflect.Array:
+			case fieldKind == reflect.Slice && fieldType.Elem().Kind() == reflect.Uint8:
+				if fieldType == rawMessageType {
+					result = &SchemaRef{Value: &Schema{}}
+				} else {
+					result = &SchemaRef{Value: &Schema{
+						Type:   &Types{"string"},
+						Format: "byte",
+					}}
+				}
+			case fieldKind == reflect.Slice, fieldKind == reflect.Array:
 				result = &SchemaRef{
 					Value: &Schema{
 						Type:  &Types{"array"},
@@ -98,48 +106,47 @@ func generateSchema(t reflect.Type) *SchemaRef {
 					},
 				}
 
-			case reflect.Map:
-				keyType := fieldType.Key().Kind()
-				if keyType == reflect.String {
-					valueSchema := generateSchema(fieldType.Elem())
-					has := true
-					result = &SchemaRef{
-						Value: &Schema{
-							Type: &Types{"object"},
-							AdditionalProperties: AdditionalProperties{
-								Has:    &has,
-								Schema: valueSchema,
-							},
+			case fieldKind == reflect.Map && fieldType.Key().Kind() == reflect.String:
+				valueSchema := generateSchema(fieldType.Elem())
+				has := true
+				result = &SchemaRef{
+					Value: &Schema{
+						Type: &Types{"object"},
+						AdditionalProperties: AdditionalProperties{
+							Has:    &has,
+							Schema: valueSchema,
 						},
-					}
-				} else {
-					result = &SchemaRef{
-						Value: &Schema{
-							Type: &Types{"object"},
-						},
-					}
+					},
+				}
+			case fieldKind == reflect.Map:
+				result = &SchemaRef{
+					Value: &Schema{
+						Type: &Types{"object"},
+					},
 				}
 
 			default:
 				result = &SchemaRef{
-					Value: &Schema{
-						Type:   &Types{getTypeString(fieldType)},
-						Format: getFormatString(fieldType),
-					},
+					Value: getDefaultSchema(fieldType),
 				}
 			}
-			result.Value.Title = fieldName
+			result.Value.Nullable = isNullable
 
 			// handle json tag
+			fieldName := field.Name
+			jsonTagOptions := strings.Split(jsonTag, ",")
+			if len(jsonTagOptions) > 0 && jsonTagOptions[0] != "" {
+				fieldName = jsonTagOptions[0]
+			}
 			for i := 1; i < len(jsonTagOptions); i++ {
 				option := jsonTagOptions[i]
 				switch option {
 				case "string":
 					result.Value.Type = &Types{"string"}
 				case "omitempty":
-					result.Value.Description += "omitempty"
+					result.Value.Description += " omitempty "
 				case "omitzero":
-					result.Value.Description += "omitzero"
+					result.Value.Description += " omitzero "
 				}
 			}
 
@@ -150,6 +157,7 @@ func generateSchema(t reflect.Type) *SchemaRef {
 				switch {
 				case validation == "required":
 					schema.Required = append(schema.Required, fieldName)
+					result.Value.Nullable = false
 					result.Value.AllowEmptyValue = false
 				case strings.HasPrefix(validation, "min=") && (fieldKind == reflect.Slice || fieldKind == reflect.Array):
 					if minValue, err := strconv.ParseUint(strings.TrimPrefix(validation, "min="), 10, 64); err == nil {
@@ -177,6 +185,8 @@ func generateSchema(t reflect.Type) *SchemaRef {
 					}
 				case strings.HasPrefix(validation, "uniqueItems"):
 					result.Value.UniqueItems = true
+				case strings.HasPrefix(validation, "omitnil"):
+					result.Value.Description += " omitnil "
 				case strings.HasPrefix(validation, "oneof="):
 					options := strings.Split(strings.TrimPrefix(validation, "oneof="), " ")
 					if result.Value.OneOf == nil {
@@ -189,6 +199,8 @@ func generateSchema(t reflect.Type) *SchemaRef {
 					}
 				}
 			}
+			result.Value.Title = fieldName
+			result.Value.Description = strings.ReplaceAll(result.Value.Description, "  ", "")
 
 			schema.Properties[fieldName] = result
 		}
@@ -207,56 +219,60 @@ func generateSchema(t reflect.Type) *SchemaRef {
 	}
 }
 
-func getTypeString(t reflect.Type) string {
+func getDefaultSchema(t reflect.Type) *Schema {
+	schema := Schema{
+		Properties: make(Schemas),
+		Required:   []string{},
+	}
 	switch t.Kind() {
-	case reflect.String:
-		return "string"
-	case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
-		return "integer"
-	case reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64:
-		return "integer"
-	case reflect.Float32, reflect.Float64:
-		return "number"
 	case reflect.Bool:
-		return "boolean"
-	case reflect.Struct:
-		return "object"
-	case reflect.Slice, reflect.Array:
-		return "array"
-	case reflect.Map:
-		return "object"
-	default:
-		return "unknown"
-	}
-}
+		schema.Type = &Types{"boolean"}
 
-func getFormatString(t reflect.Type) string {
-	switch t.Kind() {
+	case reflect.Int:
+		schema.Type = &Types{"integer"}
+	case reflect.Int8:
+		schema.Type = &Types{"integer"}
+		schema.Min = &minInt8
+		schema.Max = &maxInt8
+	case reflect.Int16:
+		schema.Type = &Types{"integer"}
+		schema.Min = &minInt16
+		schema.Max = &maxInt16
 	case reflect.Int32:
-		return "int32"
+		schema.Type = &Types{"integer"}
+		schema.Format = "int32"
 	case reflect.Int64:
-		return "int64"
-	case reflect.Float32:
-		return "float"
-	case reflect.Float64:
-		return "double"
-	case reflect.String:
-		if t.Name() == "Time" {
-			return "date-time"
-		}
-	}
-	return ""
-}
+		schema.Type = &Types{"integer"}
+		schema.Format = "int64"
+	case reflect.Uint:
+		schema.Type = &Types{"integer"}
+		schema.Min = &zeroInt
+	case reflect.Uint8:
+		schema.Type = &Types{"integer"}
+		schema.Min = &zeroInt
+		schema.Max = &maxUint8
+	case reflect.Uint16:
+		schema.Type = &Types{"integer"}
+		schema.Min = &zeroInt
+		schema.Max = &maxUint16
+	case reflect.Uint32:
+		schema.Type = &Types{"integer"}
+		schema.Min = &zeroInt
+		schema.Max = &maxUint32
+	case reflect.Uint64:
+		schema.Type = &Types{"integer"}
+		schema.Min = &zeroInt
+		schema.Max = &maxUint64
 
-func isFieldRequired(tag string) bool {
-	if tag == "" {
-		return false
+	case reflect.Float32:
+		schema.Type = &Types{"number"}
+		schema.Format = "float"
+	case reflect.Float64:
+		schema.Type = &Types{"number"}
+		schema.Format = "double"
+
+	case reflect.String:
+		schema.Type = &Types{"string"}
 	}
-	validations := strings.Split(tag, ",")
-	for _, validation := range validations {
-		if validation == "required" {
-			return true
-		}
-	}
-	return false
+	return &schema
 }
