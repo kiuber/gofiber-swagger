@@ -25,6 +25,10 @@ func main() {
 		Security: security_requirements_docs,
 	}, HelloHandler)
 
+	// You can now see your:
+	// - UI at /swagger/
+	// - json at /swagger/swagger.json
+	// - yaml at /swagger/swagger.yaml
 	gofiberswagger.Register(app, gofiberswagger.Config{
 		Swagger: gofiberswagger.SwaggerConfig{
 			OpenAPI: gofiberswagger.DefaultSwaggerConfig.OpenAPI,

@@ -56,6 +56,11 @@ func main() {
 		AutomaticallyRequireAuth: false,
 	})
 
+	// You can now see your:
+	// - UI at /swagger/
+	// - json at /swagger/swagger.json
+	// - yaml at /swagger/swagger.yaml
+
 	app.Listen(":3000")
 }
 

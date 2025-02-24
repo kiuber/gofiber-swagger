@@ -38,6 +38,10 @@ func main() {
 
 	// Register swagger. Without this line, nothing will get generated.
 	// For more config customizability, see /examples/custom-config/main.go
+	// You can now see your:
+	// - UI at /swagger/
+	// - json at /swagger/swagger.json
+	// - yaml at /swagger/swagger.yaml
 	gofiberswagger.Register(app, gofiberswagger.DefaultConfig)
 
 	app.Listen(":3000")

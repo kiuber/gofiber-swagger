@@ -46,6 +46,10 @@ func main() {
 	}, HandlerWithRequestBody)
 
 	// Register swagger. Without this line, nothing will get generated.
+	// You can now see your:
+	// - UI at /swagger/
+	// - json at /swagger/swagger.json
+	// - yaml at /swagger/swagger.yaml
 	gofiberswagger.Register(app, gofiberswagger.DefaultConfig)
 
 	app.Listen(":3000")

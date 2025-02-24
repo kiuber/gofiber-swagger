@@ -21,6 +21,10 @@ func main() {
 	gofiberswagger.RegisterRoute("GET", "/abc", &gofiberswagger.RouteInfo{})
 	gofiberswagger.RegisterRoute("GET", "/bca", &gofiberswagger.RouteInfo{})
 
+	// You can now see your:
+	// - UI at /swagger/
+	// - json at /swagger/swagger.json
+	// - yaml at /swagger/swagger.yaml
 	gofiberswagger.Register(app, gofiberswagger.DefaultConfig)
 
 	app.Listen(":3000")
