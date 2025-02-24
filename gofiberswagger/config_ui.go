@@ -1,3 +1,6 @@
+// This file was initially copied from https://github.com/gofiber/swagger/blob/6ced278517482f1bf4bab7aa82105ed770921dac/config.go.
+// Shoutout to the original authors! Since then, we've made several changes, but credit goes to them for the foundation.
+
 package gofiberswagger
 
 import (
