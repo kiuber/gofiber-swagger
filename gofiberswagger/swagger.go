@@ -7,6 +7,7 @@ import (
 	"log"
 	"os"
 	"path/filepath"
+	"strconv"
 	"strings"
 
 	"github.com/getkin/kin-openapi/openapi3"
@@ -38,10 +39,17 @@ func Register(app *fiber.App, config Config) error {
 			operation.AddParameter(parameter.Value)
 
 			corrected_path = strings.Replace(corrected_path, ":"+param_name, "{"+param_name+"}", 1)
+			if param_name[0] == '*' || param_name[0] == '+' {
+				char_to_replace := "*"
+				if param_name[0] == '+' {
+					char_to_replace = "+"
+				}
 
-			// todo: implement correcting the path (also include +)
-			if param_name[0] == '*' {
-				log.Println(param_name)
+				nth, err := strconv.ParseUint(strings.ReplaceAll(param_name, char_to_replace, ""), 10, 64)
+				if err != nil {
+					return errors.Join(errors.New("unable to parse out the nth position of the param_name \""+param_name+"\""), err)
+				}
+				corrected_path = replaceNthOccurrence(corrected_path, char_to_replace, "{"+param_name+"}", int(nth))
 			}
 		}
 		if config.AppendMethodToTags {
@@ -126,14 +134,12 @@ func Register(app *fiber.App, config Config) error {
 func generateIndexPage(ui_config SwaggerUIConfig) (index_page []byte, err error) {
 	index_tpl, err := template.New("swagger_index.html").Parse(indexPageTmpl)
 	if err != nil {
-		log.Println("gofiber-swagger: error while parsing the swagger index template -> ", err)
-		return nil, err
+		return nil, errors.Join(errors.New("gofiber-swagger: error while parsing the swagger index template -> "), err)
 	}
 	index_tpl_buf := bytes.NewBufferString("")
 	err = index_tpl.Execute(index_tpl_buf, ui_config)
 	if err != nil {
-		log.Println("gofiber-swagger: error while executing the swagger index template -> ", err)
-		return nil, err
+		return nil, errors.Join(errors.New("gofiber-swagger: error while executing the swagger index template -> "), err)
 	}
 	return index_tpl_buf.Bytes(), nil
 }
@@ -141,19 +147,16 @@ func generateIndexPage(ui_config SwaggerUIConfig) (index_page []byte, err error)
 func generateOpenApiSchema(schema openapi3.T) (as_json, as_yaml []byte, err error) {
 	schema_as_yaml_raw, err := schema.MarshalYAML()
 	if err != nil {
-		log.Println("gofiber-swagger: error while creating the yaml schema -> ", err)
-		return nil, nil, err
+		return nil, nil, errors.Join(errors.New("gofiber-swagger: error while creating the yaml schema -> "), err)
 	}
 	schema_as_yaml, err := yaml.Marshal(schema_as_yaml_raw)
 	if err != nil {
-		log.Println("gofiber-swagger: error while converting the yaml schema to yaml -> ", err)
-		return nil, nil, err
+		return nil, nil, errors.Join(errors.New("gofiber-swagger: error while converting the yaml schema to yaml -> "), err)
 	}
 
 	schema_as_json, err := schema.MarshalJSON()
 	if err != nil {
-		log.Println("gofiber-swagger: error while creating the json schema -> ", err)
-		return nil, nil, err
+		return nil, nil, errors.Join(errors.New("gofiber-swagger: error while creating the json schema -> "), err)
 	}
 
 	return schema_as_json, schema_as_yaml, nil

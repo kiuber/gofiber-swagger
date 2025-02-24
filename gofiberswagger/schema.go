@@ -2,6 +2,7 @@ package gofiberswagger
 
 import (
 	"reflect"
+	"strconv"
 	"strings"
 )
 
@@ -66,82 +67,26 @@ func generateSchema(t reflect.Type) *SchemaRef {
 			field := t.Field(i)
 
 			fieldType := field.Type
-			if fieldType.Kind() == reflect.Pointer {
+			fieldKind := fieldType.Kind()
+			if fieldKind == reflect.Pointer {
 				fieldType = fieldType.Elem()
 			}
 
 			fieldName := field.Name
-			field_schema_additonal_info := &Schema{}
 
 			// handle json tag
 			jsonTag := field.Tag.Get("json")
 			if jsonTag == "-" {
 				continue
 			}
-			jsonOptions := strings.Split(jsonTag, ",")
-			if len(jsonOptions) > 0 {
-				if jsonOptions[0] != "" {
-					field_schema_additonal_info.Title = fieldName
-					fieldName = jsonOptions[0]
-				}
-
-				for i := 1; i < len(jsonOptions); i++ {
-					option := jsonOptions[i]
-					switch option {
-					case "string":
-						field_schema_additonal_info.Type = &Types{"string"}
-					case "omitempty":
-						field_schema_additonal_info.Description += "omitempty"
-					case "omitzero":
-						field_schema_additonal_info.Description += "omitzero"
-					}
-				}
-			}
-
-			// handle validate tag
-			validateTag := field.Tag.Get("validate")
-			validationOptions := strings.Split(validateTag, ",")
-			for _, validation := range validationOptions {
-				switch {
-				case validation == "required":
-					schema.Required = append(schema.Required, fieldName)
-				// case strings.HasPrefix(validation, "min="):
-				// 	minValue := strings.TrimPrefix(validation, "min=")
-				// 	field_schema_additonal_info.Min = minValue
-				// case strings.HasPrefix(validation, "max="):
-				// 	maxValue := strings.TrimPrefix(validation, "max=")
-				// 	field_schema_additonal_info.Max = maxValue
-				// case strings.HasPrefix(validation, "minLength="):
-				// 	minLen := strings.TrimPrefix(validation, "minLength=")
-				// 	field_schema_additonal_info.MinLength = minLen
-				// case strings.HasPrefix(validation, "maxLength="):
-				// 	maxLen := strings.TrimPrefix(validation, "maxLength=")
-				// 	field_schema_additonal_info.MaxLength = maxLen
-				// case strings.HasPrefix(validation, "pattern="):
-				// 	pattern := strings.TrimPrefix(validation, "pattern=")
-				// 	field_schema_additonal_info.Pattern = pattern
-				// case strings.HasPrefix(validation, "enum="):
-				// 	enumValues := strings.TrimPrefix(validation, "enum=")
-				// 	field_schema_additonal_info.Enum = strings.Split(enumValues, "|")
-				// case strings.HasPrefix(validation, "minItems="):
-				// 	minItems := strings.TrimPrefix(validation, "minItems=")
-				// 	field_schema_additonal_info.MinItems = minItems
-				// case strings.HasPrefix(validation, "maxItems="):
-				// 	maxItems := strings.TrimPrefix(validation, "maxItems=")
-				// 	field_schema_additonal_info.MaxItems = maxItems
-				// case strings.HasPrefix(validation, "uniqueItems"):
-				// 	field_schema_additonal_info.UniqueItems = true
-				// case strings.HasPrefix(validation, "multipleOf="):
-				// 	multipleOf := strings.TrimPrefix(validation, "multipleOf=")
-				// 	field_schema_additonal_info.MultipleOf = multipleOf
-				default:
-					continue
-				}
+			jsonTagOptions := strings.Split(jsonTag, ",")
+			if len(jsonTagOptions) > 0 && jsonTagOptions[0] != "" {
+				fieldName = jsonTagOptions[0]
 			}
 
 			// create schema for the field
 			var result *SchemaRef = nil
-			switch fieldType.Kind() {
+			switch fieldKind {
 			case reflect.Struct:
 				result = generateSchema(fieldType)
 
@@ -183,16 +128,66 @@ func generateSchema(t reflect.Type) *SchemaRef {
 					},
 				}
 			}
+			result.Value.Title = fieldName
 
-			// overwrite result with aditional preset info taken from tags
-			if field_schema_additonal_info.Title != "" {
-				result.Value.Title = field_schema_additonal_info.Title
+			// handle json tag
+			for i := 1; i < len(jsonTagOptions); i++ {
+				option := jsonTagOptions[i]
+				switch option {
+				case "string":
+					result.Value.Type = &Types{"string"}
+				case "omitempty":
+					result.Value.Description += "omitempty"
+				case "omitzero":
+					result.Value.Description += "omitzero"
+				}
 			}
-			if field_schema_additonal_info.Type != nil {
-				result.Value.Type = field_schema_additonal_info.Type
-			}
-			if field_schema_additonal_info.Description != "" {
-				result.Value.Description += field_schema_additonal_info.Description
+
+			// handle validate tag
+			validateTag := field.Tag.Get("validate")
+			validateTagOptions := strings.Split(validateTag, ",")
+			for _, validation := range validateTagOptions {
+				switch {
+				case validation == "required":
+					schema.Required = append(schema.Required, fieldName)
+					result.Value.AllowEmptyValue = false
+				case strings.HasPrefix(validation, "min=") && (fieldKind == reflect.Slice || fieldKind == reflect.Array):
+					if minValue, err := strconv.ParseUint(strings.TrimPrefix(validation, "min="), 10, 64); err == nil {
+						result.Value.MinItems = minValue
+					}
+				case strings.HasPrefix(validation, "min="):
+					if minValue, err := strconv.ParseFloat(strings.TrimPrefix(validation, "min="), 64); err == nil {
+						result.Value.Min = &minValue
+					}
+				case strings.HasPrefix(validation, "max=") && (fieldKind == reflect.Slice || fieldKind == reflect.Array):
+					if maxValue, err := strconv.ParseUint(strings.TrimPrefix(validation, "max="), 10, 64); err == nil {
+						result.Value.MaxItems = &maxValue
+					}
+				case strings.HasPrefix(validation, "max="):
+					if maxValue, err := strconv.ParseFloat(strings.TrimPrefix(validation, "max="), 64); err == nil {
+						result.Value.Max = &maxValue
+					}
+				case strings.HasPrefix(validation, "minLength="):
+					if minLen, err := strconv.ParseUint(strings.TrimPrefix(validation, "minLength="), 10, 64); err == nil {
+						result.Value.MinLength = minLen
+					}
+				case strings.HasPrefix(validation, "maxLength="):
+					if maxLen, err := strconv.ParseUint(strings.TrimPrefix(validation, "maxLength="), 10, 64); err == nil {
+						result.Value.MaxLength = &maxLen
+					}
+				case strings.HasPrefix(validation, "uniqueItems"):
+					result.Value.UniqueItems = true
+				case strings.HasPrefix(validation, "oneof="):
+					options := strings.Split(strings.TrimPrefix(validation, "oneof="), " ")
+					if result.Value.OneOf == nil {
+						result.Value.OneOf = []*SchemaRef{}
+					}
+					for _, option := range options {
+						option_schema := NewStringSchema()
+						option_schema.Default = option
+						result.Value.OneOf = append(result.Value.OneOf, &SchemaRef{Value: option_schema})
+					}
+				}
 			}
 
 			schema.Properties[fieldName] = result
