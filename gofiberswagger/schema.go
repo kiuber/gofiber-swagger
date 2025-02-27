@@ -93,25 +93,52 @@ func generateSchema(t reflect.Type) *SchemaRef {
 				isNullable = true
 			}
 
-			// create schema for the field
+			// log.Println(fieldType, fieldTypeName, fieldKind)
+
+			// create schema for the field. First handle special cases!
 			var result *SchemaRef = nil
 			switch {
+			// skip channels and functions
 			case fieldKind == reflect.Func, fieldKind == reflect.Chan:
 				continue
 
+			// handle time type
 			case fieldKind == reflect.Struct && fieldType == timeType:
 				result = &SchemaRef{Value: &Schema{
 					Type:   &Types{"string"},
 					Format: "date-time",
 				}}
+
+			// handle file uploads
 			case fieldKind == reflect.Struct && fieldTypeName == "FileHeader" && fieldTypePkgPath == "mime/multipart":
 				result = &SchemaRef{Value: &Schema{
 					Type:   &Types{"string"},
 					Format: "binary",
 				}}
-			case fieldKind == reflect.Struct:
-				result = generateSchema(fieldType)
 
+			// handle UUID
+			case fieldKind == reflect.Array && fieldTypeName == "UUID" && fieldType.Elem().Kind() == reflect.Uint8:
+				result = &SchemaRef{
+					Value: &Schema{
+						Type:   &Types{"string"},
+						Format: "uuid",
+					},
+				}
+
+			// handle NullUUID
+			case fieldKind == reflect.Struct && fieldTypeName == "NullUUID" && func() bool {
+				_, ok := fieldType.FieldByName("UUID")
+				return ok
+			}():
+				isNullable = true
+				result = &SchemaRef{
+					Value: &Schema{
+						Type:   &Types{"string"},
+						Format: "uuid",
+					},
+				}
+
+			// handle bytes
 			case fieldKind == reflect.Slice && fieldType.Elem().Kind() == reflect.Uint8:
 				if fieldType == rawMessageType {
 					result = &SchemaRef{Value: &Schema{}}
@@ -121,21 +148,8 @@ func generateSchema(t reflect.Type) *SchemaRef {
 						Format: "byte",
 					}}
 				}
-			case fieldKind == reflect.Array && fieldTypeName == "UUID" && fieldType.Elem().Kind() == reflect.Uint8: // could also add fieldType.Len() == 16, to be 100% sure, however it's not necessary atm
-				result = &SchemaRef{
-					Value: &Schema{
-						Type:   &Types{"string"},
-						Format: "uuid",
-					},
-				}
-			case fieldKind == reflect.Slice, fieldKind == reflect.Array:
-				result = &SchemaRef{
-					Value: &Schema{
-						Type:  &Types{"array"},
-						Items: generateSchema(fieldType.Elem()),
-					},
-				}
 
+			// handle map[string]object
 			case fieldKind == reflect.Map && fieldType.Key().Kind() == reflect.String:
 				valueSchema := generateSchema(fieldType.Elem())
 				has := true
@@ -148,6 +162,21 @@ func generateSchema(t reflect.Type) *SchemaRef {
 						},
 					},
 				}
+
+			// handle general structs
+			case fieldKind == reflect.Struct:
+				result = generateSchema(fieldType)
+
+			// handle general slices / arrays
+			case fieldKind == reflect.Slice, fieldKind == reflect.Array:
+				result = &SchemaRef{
+					Value: &Schema{
+						Type:  &Types{"array"},
+						Items: generateSchema(fieldType.Elem()),
+					},
+				}
+
+			// handle general maps
 			case fieldKind == reflect.Map:
 				result = &SchemaRef{
 					Value: &Schema{
@@ -155,6 +184,7 @@ func generateSchema(t reflect.Type) *SchemaRef {
 					},
 				}
 
+			// generated default schema for non-special types (string/int/etc)
 			default:
 				result = &SchemaRef{
 					Value: getDefaultSchema(fieldType),
