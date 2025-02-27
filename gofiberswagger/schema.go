@@ -71,10 +71,10 @@ func generateSchema(t reflect.Type) *SchemaRef {
 	}
 
 	schema := getDefaultSchema(t)
-
 	if t.Kind() == reflect.Struct {
 		schema.Title = tName
-		for i := 0; i < t.NumField(); i++ {
+		schema.Type = &Types{"object"}
+		for i := range t.NumField() {
 			field := t.Field(i)
 
 			jsonTag := field.Tag.Get("json")
@@ -83,6 +83,8 @@ func generateSchema(t reflect.Type) *SchemaRef {
 			}
 
 			fieldType := field.Type
+			fieldTypeName := fieldType.Name()
+			fieldTypePkgPath := fieldType.PkgPath()
 			fieldKind := fieldType.Kind()
 			isNullable := false
 			if fieldKind == reflect.Pointer {
@@ -102,6 +104,11 @@ func generateSchema(t reflect.Type) *SchemaRef {
 					Type:   &Types{"string"},
 					Format: "date-time",
 				}}
+			case fieldKind == reflect.Struct && fieldTypeName == "FileHeader" && fieldTypePkgPath == "mime/multipart":
+				result = &SchemaRef{Value: &Schema{
+					Type:   &Types{"string"},
+					Format: "binary",
+				}}
 			case fieldKind == reflect.Struct:
 				result = generateSchema(fieldType)
 
@@ -114,7 +121,7 @@ func generateSchema(t reflect.Type) *SchemaRef {
 						Format: "byte",
 					}}
 				}
-			case fieldKind == reflect.Array && fieldType.Name() == "UUID" && fieldType.Elem().Kind() == reflect.Uint8: // could also add fieldType.Len() == 16, to be 100% sure, however it's not necessary atm
+			case fieldKind == reflect.Array && fieldTypeName == "UUID" && fieldType.Elem().Kind() == reflect.Uint8: // could also add fieldType.Len() == 16, to be 100% sure, however it's not necessary atm
 				result = &SchemaRef{
 					Value: &Schema{
 						Type:   &Types{"string"},

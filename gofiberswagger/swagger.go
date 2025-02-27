@@ -109,7 +109,7 @@ func Register(app *fiber.App, config Config) error {
 
 	if config.CreateSwaggerFiles && !fiber.IsChild() {
 		if config.SwaggerFilesPath == "" {
-			return errors.New("CreateSwaggerFiles was set to true, however SwaggerFilesPaths was left empty.")
+			return errors.New("gofiber-swagger: CreateSwaggerFiles was set to true, however SwaggerFilesPaths was left empty")
 		}
 		createSwaggerFiles(config.SwaggerFilesPath, index_page, schema_as_json, schema_as_yaml)
 	}
