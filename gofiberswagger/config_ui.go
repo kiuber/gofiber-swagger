@@ -279,6 +279,8 @@ var DefaultUIConfig = SwaggerUIConfig{
 	ShowMutatedRequest:     true,
 	DisplayRequestDuration: true,
 	PersistAuthorization:   true,
+	RequestSnippetsEnabled: true,
+	TryItOutEnabled:        true,
 }
 
 func swaggerUIConfigDefault(ui_config SwaggerUIConfig) SwaggerUIConfig {
