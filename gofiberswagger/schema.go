@@ -151,37 +151,47 @@ func generateSchema(t reflect.Type) *SchemaRef {
 			case fieldKind == reflect.Struct && (isNullType(fieldType, "NullInt16", "Int16") || isNullTypeWrapper(fieldType, "NullInt16", "Int16")):
 				isNullable = true
 				result = &SchemaRef{Value: &Schema{
-					Type: &Types{"integer"},
-					Min:  &minInt16,
-					Max:  &maxInt16,
+					Type:         &Types{"integer"},
+					Min:          &minInt16,
+					Max:          &maxInt16,
+					ExclusiveMin: false,
+					ExclusiveMax: false,
 				}}
 
 			// handle sql.NullInt32 and it's alias wrappers
 			case fieldKind == reflect.Struct && (isNullType(fieldType, "NullInt32", "Int32") || isNullTypeWrapper(fieldType, "NullInt32", "Int32")):
 				isNullable = true
 				result = &SchemaRef{Value: &Schema{
-					Type:   &Types{"integer"},
-					Format: "int32",
-					Min:    &minInt32,
-					Max:    &maxInt32,
+					Type:         &Types{"integer"},
+					Format:       "int32",
+					Min:          &minInt32,
+					Max:          &maxInt32,
+					ExclusiveMin: false,
+					ExclusiveMax: false,
 				}}
 
 			// handle sql.NullInt64 and it's alias wrappers
 			case fieldKind == reflect.Struct && (isNullType(fieldType, "NullInt64", "Int64") || isNullTypeWrapper(fieldType, "NullInt64", "Int64")):
 				isNullable = true
 				result = &SchemaRef{Value: &Schema{
-					Type:   &Types{"integer"},
-					Format: "int64",
-					Min:    &minInt64,
-					Max:    &maxInt64,
+					Type:         &Types{"integer"},
+					Format:       "int64",
+					Min:          &minInt64,
+					Max:          &maxInt64,
+					ExclusiveMin: false,
+					ExclusiveMax: false,
 				}}
 
 			// handle sql.NullFloat64 and it's alias wrappers
 			case fieldKind == reflect.Struct && (isNullType(fieldType, "NullFloat64", "Float64") || isNullTypeWrapper(fieldType, "NullFloat64", "Float64")):
 				isNullable = true
 				result = &SchemaRef{Value: &Schema{
-					Type:   &Types{"number"},
-					Format: "double",
+					Type:         &Types{"number"},
+					Format:       "double",
+					Min:          &minInt64,
+					Max:          &maxInt64,
+					ExclusiveMin: false,
+					ExclusiveMax: false,
 				}}
 
 			// handle sql.NullTime and it's alias wrappers
@@ -347,51 +357,79 @@ func getDefaultSchema(t reflect.Type) *Schema {
 		schema.Type = &Types{"integer"}
 		schema.Min = &minInt
 		schema.Max = &maxInt
+		schema.ExclusiveMin = false
+		schema.ExclusiveMax = false
 	case reflect.Int8:
 		schema.Type = &Types{"integer"}
 		schema.Min = &minInt8
 		schema.Max = &maxInt8
+		schema.ExclusiveMin = false
+		schema.ExclusiveMax = false
 	case reflect.Int16:
 		schema.Type = &Types{"integer"}
 		schema.Min = &minInt16
 		schema.Max = &maxInt16
+		schema.ExclusiveMin = false
+		schema.ExclusiveMax = false
 	case reflect.Int32:
 		schema.Type = &Types{"integer"}
 		schema.Format = "int32"
 		schema.Min = &minInt32
 		schema.Max = &maxInt32
+		schema.ExclusiveMin = false
+		schema.ExclusiveMax = false
 	case reflect.Int64:
 		schema.Type = &Types{"integer"}
 		schema.Format = "int64"
 		schema.Min = &minInt64
 		schema.Max = &maxInt64
+		schema.ExclusiveMin = false
+		schema.ExclusiveMax = false
 	case reflect.Uint:
 		schema.Type = &Types{"integer"}
 		schema.Min = &zeroInt
 		schema.Max = &maxUint
+		schema.ExclusiveMin = false
+		schema.ExclusiveMax = false
 	case reflect.Uint8:
 		schema.Type = &Types{"integer"}
 		schema.Min = &zeroInt
 		schema.Max = &maxUint8
+		schema.ExclusiveMin = false
+		schema.ExclusiveMax = false
 	case reflect.Uint16:
 		schema.Type = &Types{"integer"}
 		schema.Min = &zeroInt
 		schema.Max = &maxUint16
+		schema.ExclusiveMin = false
+		schema.ExclusiveMax = false
 	case reflect.Uint32:
 		schema.Type = &Types{"integer"}
 		schema.Min = &zeroInt
 		schema.Max = &maxUint32
+		schema.ExclusiveMin = false
+		schema.ExclusiveMax = false
 	case reflect.Uint64:
 		schema.Type = &Types{"integer"}
 		schema.Min = &zeroInt
 		schema.Max = &maxUint64
+		schema.ExclusiveMin = false
+		schema.ExclusiveMax = false
 
 	case reflect.Float32:
 		schema.Type = &Types{"number"}
 		schema.Format = "float"
+		schema.Min = &minFloat32
+		schema.Max = &maxFloat32
+		schema.ExclusiveMin = false
+		schema.ExclusiveMax = false
 	case reflect.Float64:
 		schema.Type = &Types{"number"}
 		schema.Format = "double"
+		schema.Min = &minFloat64
+		schema.Max = &maxFloat64
+		schema.ExclusiveMin = false
+		schema.ExclusiveMax = false
 
 	case reflect.String:
 		schema.Type = &Types{"string"}
