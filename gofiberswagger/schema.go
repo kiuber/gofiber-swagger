@@ -93,6 +93,7 @@ func generateSchema(t reflect.Type) *SchemaRef {
 				isNullable = true
 			}
 
+			// for debugging purposes:
 			// log.Println(fieldType, fieldTypeName, fieldKind)
 
 			// create schema for the field. First handle special cases!
@@ -116,27 +117,87 @@ func generateSchema(t reflect.Type) *SchemaRef {
 					Format: "binary",
 				}}
 
-			// handle UUID
+			// handle uuid.UUID
 			case fieldKind == reflect.Array && fieldTypeName == "UUID" && fieldType.Elem().Kind() == reflect.Uint8:
-				result = &SchemaRef{
-					Value: &Schema{
-						Type:   &Types{"string"},
-						Format: "uuid",
-					},
-				}
+				result = &SchemaRef{Value: &Schema{
+					Type:   &Types{"string"},
+					Format: "uuid",
+				}}
 
-			// handle NullUUID
-			case fieldKind == reflect.Struct && fieldTypeName == "NullUUID" && func() bool {
-				_, ok := fieldType.FieldByName("UUID")
-				return ok
-			}():
+			// handle uuid.NullUUID
+			case fieldKind == reflect.Struct && fieldTypeName == "NullUUID" && isNullType(fieldType, "UUID"):
 				isNullable = true
-				result = &SchemaRef{
-					Value: &Schema{
-						Type:   &Types{"string"},
-						Format: "uuid",
-					},
-				}
+				result = &SchemaRef{Value: &Schema{
+					Type:   &Types{"string"},
+					Format: "uuid",
+				}}
+
+			// handle sql.NullBool
+			case fieldKind == reflect.Struct && fieldTypeName == "NullBool" && isNullType(fieldType, "Bool"):
+				isNullable = true
+				result = &SchemaRef{Value: &Schema{
+					Type: &Types{"boolean"},
+				}}
+
+			// handle sql.NullByte
+			case fieldKind == reflect.Struct && fieldTypeName == "NullByte" && isNullType(fieldType, "Byte"):
+				isNullable = true
+				result = &SchemaRef{Value: &Schema{
+					Type:   &Types{"string"},
+					Format: "byte",
+				}}
+
+			// handle sql.NullInt16
+			case fieldKind == reflect.Struct && fieldTypeName == "NullInt16" && isNullType(fieldType, "Int16"):
+				isNullable = true
+				result = &SchemaRef{Value: &Schema{
+					Type: &Types{"integer"},
+					Min:  &minInt16,
+					Max:  &maxInt16,
+				}}
+
+			// handle sql.NullInt32
+			case fieldKind == reflect.Struct && fieldTypeName == "NullInt32" && isNullType(fieldType, "Int32"):
+				isNullable = true
+				result = &SchemaRef{Value: &Schema{
+					Type:   &Types{"integer"},
+					Format: "int32",
+					Min:    &minInt32,
+					Max:    &maxInt32,
+				}}
+
+			// handle sql.NullInt64
+			case fieldKind == reflect.Struct && fieldTypeName == "NullInt64" && isNullType(fieldType, "Int64"):
+				isNullable = true
+				result = &SchemaRef{Value: &Schema{
+					Type:   &Types{"integer"},
+					Format: "int64",
+					Min:    &minInt64,
+					Max:    &maxInt64,
+				}}
+
+			// handle sql.NullFloat64
+			case fieldKind == reflect.Struct && fieldTypeName == "NullFloat64" && isNullType(fieldType, "Float64"):
+				isNullable = true
+				result = &SchemaRef{Value: &Schema{
+					Type:   &Types{"number"},
+					Format: "double",
+				}}
+
+			// handle sql.NullTime
+			case fieldKind == reflect.Struct && fieldTypeName == "NullTime" && isNullType(fieldType, "Time"): // todo: we could also check whether the Time field is of time.Time type
+				isNullable = true
+				result = &SchemaRef{Value: &Schema{
+					Type:   &Types{"string"},
+					Format: "date-time",
+				}}
+
+			// handle sql.NullString
+			case fieldKind == reflect.Struct && fieldTypeName == "NullString" && isNullType(fieldType, "String"):
+				isNullable = true
+				result = &SchemaRef{Value: &Schema{
+					Type: &Types{"string"},
+				}}
 
 			// handle bytes
 			case fieldKind == reflect.Slice && fieldType.Elem().Kind() == reflect.Uint8:
@@ -153,15 +214,13 @@ func generateSchema(t reflect.Type) *SchemaRef {
 			case fieldKind == reflect.Map && fieldType.Key().Kind() == reflect.String:
 				valueSchema := generateSchema(fieldType.Elem())
 				has := true
-				result = &SchemaRef{
-					Value: &Schema{
-						Type: &Types{"object"},
-						AdditionalProperties: AdditionalProperties{
-							Has:    &has,
-							Schema: valueSchema,
-						},
+				result = &SchemaRef{Value: &Schema{
+					Type: &Types{"object"},
+					AdditionalProperties: AdditionalProperties{
+						Has:    &has,
+						Schema: valueSchema,
 					},
-				}
+				}}
 
 			// handle general structs
 			case fieldKind == reflect.Struct:
@@ -169,20 +228,16 @@ func generateSchema(t reflect.Type) *SchemaRef {
 
 			// handle general slices / arrays
 			case fieldKind == reflect.Slice, fieldKind == reflect.Array:
-				result = &SchemaRef{
-					Value: &Schema{
-						Type:  &Types{"array"},
-						Items: generateSchema(fieldType.Elem()),
-					},
-				}
+				result = &SchemaRef{Value: &Schema{
+					Type:  &Types{"array"},
+					Items: generateSchema(fieldType.Elem()),
+				}}
 
 			// handle general maps
 			case fieldKind == reflect.Map:
-				result = &SchemaRef{
-					Value: &Schema{
-						Type: &Types{"object"},
-					},
-				}
+				result = &SchemaRef{Value: &Schema{
+					Type: &Types{"object"},
+				}}
 
 			// generated default schema for non-special types (string/int/etc)
 			default:
@@ -290,6 +345,8 @@ func getDefaultSchema(t reflect.Type) *Schema {
 
 	case reflect.Int:
 		schema.Type = &Types{"integer"}
+		schema.Min = &minInt
+		schema.Max = &maxInt
 	case reflect.Int8:
 		schema.Type = &Types{"integer"}
 		schema.Min = &minInt8
@@ -301,12 +358,17 @@ func getDefaultSchema(t reflect.Type) *Schema {
 	case reflect.Int32:
 		schema.Type = &Types{"integer"}
 		schema.Format = "int32"
+		schema.Min = &minInt32
+		schema.Max = &maxInt32
 	case reflect.Int64:
 		schema.Type = &Types{"integer"}
 		schema.Format = "int64"
+		schema.Min = &minInt64
+		schema.Max = &maxInt64
 	case reflect.Uint:
 		schema.Type = &Types{"integer"}
 		schema.Min = &zeroInt
+		schema.Max = &maxUint
 	case reflect.Uint8:
 		schema.Type = &Types{"integer"}
 		schema.Min = &zeroInt
@@ -342,4 +404,13 @@ func getDefaultSchema(t reflect.Type) *Schema {
 	}
 
 	return &schema
+}
+
+func isNullType(fieldType reflect.Type, uniqueFieldName string) bool {
+	_, has_valid := fieldType.FieldByName("Valid")
+	if !has_valid {
+		return false
+	}
+	_, ok_unique := fieldType.FieldByName(uniqueFieldName)
+	return ok_unique
 }
