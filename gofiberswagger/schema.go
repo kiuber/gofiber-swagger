@@ -124,31 +124,31 @@ func generateSchema(t reflect.Type) *SchemaRef {
 					Format: "uuid",
 				}}
 
-			// handle uuid.NullUUID
-			case fieldKind == reflect.Struct && fieldTypeName == "NullUUID" && isNullType(fieldType, "UUID"):
+			// handle uuid.NullUUID and it's alias wrappers
+			case fieldKind == reflect.Struct && (isNullType(fieldType, "NullUUID", "UUID") || isNullTypeWrapper(fieldType, "NullUUID", "UUID")):
 				isNullable = true
 				result = &SchemaRef{Value: &Schema{
 					Type:   &Types{"string"},
 					Format: "uuid",
 				}}
 
-			// handle sql.NullBool
-			case fieldKind == reflect.Struct && fieldTypeName == "NullBool" && isNullType(fieldType, "Bool"):
+			// handle sql.NullBool and it's alias wrappers
+			case fieldKind == reflect.Struct && (isNullType(fieldType, "NullBool", "Bool") || isNullTypeWrapper(fieldType, "NullBool", "Bool")):
 				isNullable = true
 				result = &SchemaRef{Value: &Schema{
 					Type: &Types{"boolean"},
 				}}
 
-			// handle sql.NullByte
-			case fieldKind == reflect.Struct && fieldTypeName == "NullByte" && isNullType(fieldType, "Byte"):
+			// handle sql.NullByte and it's alias wrappers
+			case fieldKind == reflect.Struct && (isNullType(fieldType, "NullByte", "Byte") || isNullTypeWrapper(fieldType, "NullByte", "Byte")):
 				isNullable = true
 				result = &SchemaRef{Value: &Schema{
 					Type:   &Types{"string"},
 					Format: "byte",
 				}}
 
-			// handle sql.NullInt16
-			case fieldKind == reflect.Struct && fieldTypeName == "NullInt16" && isNullType(fieldType, "Int16"):
+			// handle sql.NullInt16 and it's alias wrappers
+			case fieldKind == reflect.Struct && (isNullType(fieldType, "NullInt16", "Int16") || isNullTypeWrapper(fieldType, "NullInt16", "Int16")):
 				isNullable = true
 				result = &SchemaRef{Value: &Schema{
 					Type: &Types{"integer"},
@@ -156,8 +156,8 @@ func generateSchema(t reflect.Type) *SchemaRef {
 					Max:  &maxInt16,
 				}}
 
-			// handle sql.NullInt32
-			case fieldKind == reflect.Struct && fieldTypeName == "NullInt32" && isNullType(fieldType, "Int32"):
+			// handle sql.NullInt32 and it's alias wrappers
+			case fieldKind == reflect.Struct && (isNullType(fieldType, "NullInt32", "Int32") || isNullTypeWrapper(fieldType, "NullInt32", "Int32")):
 				isNullable = true
 				result = &SchemaRef{Value: &Schema{
 					Type:   &Types{"integer"},
@@ -166,8 +166,8 @@ func generateSchema(t reflect.Type) *SchemaRef {
 					Max:    &maxInt32,
 				}}
 
-			// handle sql.NullInt64
-			case fieldKind == reflect.Struct && fieldTypeName == "NullInt64" && isNullType(fieldType, "Int64"):
+			// handle sql.NullInt64 and it's alias wrappers
+			case fieldKind == reflect.Struct && (isNullType(fieldType, "NullInt64", "Int64") || isNullTypeWrapper(fieldType, "NullInt64", "Int64")):
 				isNullable = true
 				result = &SchemaRef{Value: &Schema{
 					Type:   &Types{"integer"},
@@ -176,24 +176,24 @@ func generateSchema(t reflect.Type) *SchemaRef {
 					Max:    &maxInt64,
 				}}
 
-			// handle sql.NullFloat64
-			case fieldKind == reflect.Struct && fieldTypeName == "NullFloat64" && isNullType(fieldType, "Float64"):
+			// handle sql.NullFloat64 and it's alias wrappers
+			case fieldKind == reflect.Struct && (isNullType(fieldType, "NullFloat64", "Float64") || isNullTypeWrapper(fieldType, "NullFloat64", "Float64")):
 				isNullable = true
 				result = &SchemaRef{Value: &Schema{
 					Type:   &Types{"number"},
 					Format: "double",
 				}}
 
-			// handle sql.NullTime
-			case fieldKind == reflect.Struct && fieldTypeName == "NullTime" && isNullType(fieldType, "Time"): // todo: we could also check whether the Time field is of time.Time type
+			// handle sql.NullTime and it's alias wrappers
+			case fieldKind == reflect.Struct && (isNullType(fieldType, "NullTime", "Time") || isNullTypeWrapper(fieldType, "NullTime", "Time")): // todo: we could also check whether the Time field is of time.Time type
 				isNullable = true
 				result = &SchemaRef{Value: &Schema{
 					Type:   &Types{"string"},
 					Format: "date-time",
 				}}
 
-			// handle sql.NullString
-			case fieldKind == reflect.Struct && fieldTypeName == "NullString" && isNullType(fieldType, "String"):
+			// handle sql.NullString and it's alias wrappers
+			case fieldKind == reflect.Struct && (isNullType(fieldType, "NullString", "String") || isNullTypeWrapper(fieldType, "NullString", "String")):
 				isNullable = true
 				result = &SchemaRef{Value: &Schema{
 					Type: &Types{"string"},
@@ -406,11 +406,40 @@ func getDefaultSchema(t reflect.Type) *Schema {
 	return &schema
 }
 
-func isNullType(fieldType reflect.Type, uniqueFieldName string) bool {
+// matches cases:
+//
+//	type SomeStruct struct{
+//		SomeValue sql.Null* <---- this part
+//	}
+func isNullType(fieldType reflect.Type, nullFieldName string, uniqueFieldName string) bool {
+	if fieldType.Kind() != reflect.Struct || fieldType.Name() != nullFieldName {
+		return false
+	}
 	_, has_valid := fieldType.FieldByName("Valid")
 	if !has_valid {
 		return false
 	}
 	_, ok_unique := fieldType.FieldByName(uniqueFieldName)
 	return ok_unique
+}
+
+// matches cases:
+//
+//	type SQLNull* struct {
+//		sql.Null*
+//	}
+//
+//	type SomeStruct struct {
+//		SomeValue SQLNull* <---- this part
+//	}
+func isNullTypeWrapper(fieldType reflect.Type, nullFieldName string, uniqueFieldName string) bool {
+	if fieldType.Kind() != reflect.Struct || fieldType.NumField() != 1 {
+		return false
+	}
+	possible_null_type_field := fieldType.Field(0)
+	if possible_null_type_field.Name != nullFieldName {
+		return false
+	}
+
+	return isNullType(possible_null_type_field.Type, nullFieldName, uniqueFieldName)
 }
