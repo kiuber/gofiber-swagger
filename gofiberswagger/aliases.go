@@ -58,6 +58,20 @@ type NewResponsesOption = openapi3.NewResponsesOption
 type AdditionalProperties = openapi3.AdditionalProperties
 
 // ----- Request Body ----- //
+func NewRequestBody[T any]() *RequestBodyRef {
+	return NewRequestBodyExtended[T]("", false)
+}
+func NewRequestBodyExtended[T any](description string, required bool) *RequestBodyRef {
+	request_body := openapi3.NewRequestBody()
+	request_body.WithDescription(description)
+	request_body.WithRequired(required)
+	schema := CreateSchema[T]()
+	request_body.WithSchemaRef(schema, []string{
+		"application/json", "application/xml", "application/x-www-form-urlencoded", "multipart/form-data", // all supported by the `c.Bind().Body()` function
+	})
+	return &RequestBodyRef{Value: request_body}
+}
+
 func NewRequestBodyJSON[T any]() *RequestBodyRef {
 	return NewRequestBodyJSONExtended[T]("", false)
 }
