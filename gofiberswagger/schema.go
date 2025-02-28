@@ -24,12 +24,7 @@ func getFromAcquiredSchemas(ref string) *SchemaRef {
 		return nil
 	}
 
-	schema := acquiredSchemas[ref]
-	if schema == nil {
-		return nil
-	}
-
-	return schema
+	return acquiredSchemas[ref]
 }
 
 func CreateSchema[T any]() *SchemaRef {
