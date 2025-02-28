@@ -11,7 +11,7 @@ import (
 
 var acquiredSchemas map[string]*SchemaRef
 
-func appendToAcquiredSchemas(ref string, schema *SchemaRef) {
+func setToAcquiredSchemas(ref string, schema *SchemaRef) {
 	if acquiredSchemas == nil {
 		acquiredSchemas = make(map[string]*SchemaRef)
 	}
@@ -19,7 +19,7 @@ func appendToAcquiredSchemas(ref string, schema *SchemaRef) {
 		acquiredSchemas[ref] = schema
 	}
 }
-func getAcquiredSchemas(ref string) *SchemaRef {
+func getFromAcquiredSchemas(ref string) *SchemaRef {
 	if acquiredSchemas == nil {
 		return nil
 	}
@@ -38,26 +38,24 @@ func CreateSchema[T any]() *SchemaRef {
 }
 
 func generateSchema(t reflect.Type) *SchemaRef {
-	if t.Kind() == reflect.Pointer {
+	for t.Kind() == reflect.Pointer {
 		t = t.Elem()
 	}
 
 	tName := t.Name()
 	if tName == "" {
 		var genPartOfName string
-
 		if genPart, err := uuid.NewUUID(); err == nil {
 			genPartOfName = genPart.String()
 		} else {
 			genPartOfName = strconv.Itoa(rand.Int())
 		}
-
 		tName = "generated-" + genPartOfName
 	}
 
 	ref := strings.ReplaceAll(strings.ReplaceAll(t.PkgPath(), "/", "_"), ".", "_") + tName
 	ref_path := "#/components/schemas/" + ref
-	possibleSchema := getAcquiredSchemas(ref)
+	possibleSchema := getFromAcquiredSchemas(ref)
 	if possibleSchema != nil {
 		if t.Kind() == reflect.Struct {
 			return &SchemaRef{
@@ -83,6 +81,10 @@ func generateSchema(t reflect.Type) *SchemaRef {
 	if t.Kind() == reflect.Struct {
 		schema.Title = tName
 		schema.Type = &Types{"object"}
+
+		// set placeholder that will get overwritten to prevent recursion
+		setToAcquiredSchemas(ref, &SchemaRef{Value: &Schema{}})
+
 		for i := range t.NumField() {
 			field := t.Field(i)
 
@@ -91,17 +93,15 @@ func generateSchema(t reflect.Type) *SchemaRef {
 				continue
 			}
 
-			fieldType := field.Type
-			fieldTypeName := fieldType.Name()
-			fieldTypePkgPath := fieldType.PkgPath()
-			fieldKind := fieldType.Kind()
 			isNullable := false
-			if fieldKind == reflect.Pointer {
-				fieldKind = fieldType.Elem().Kind()
+			fieldType := field.Type
+			for fieldType.Kind() == reflect.Pointer {
 				fieldType = fieldType.Elem()
 				isNullable = true
 			}
-
+			fieldTypeName := fieldType.Name()
+			fieldTypePkgPath := fieldType.PkgPath()
+			fieldKind := fieldType.Kind()
 			// for debugging purposes:
 			// log.Println(field)
 
@@ -112,7 +112,7 @@ func generateSchema(t reflect.Type) *SchemaRef {
 			case fieldKind == reflect.Func, fieldKind == reflect.Chan:
 				continue
 
-			// handle time type
+			// handle time.Time type
 			case fieldKind == reflect.Struct && fieldType == timeType:
 				result = &SchemaRef{Value: &Schema{
 					Type:   &Types{"string"},
@@ -297,13 +297,22 @@ func generateSchema(t reflect.Type) *SchemaRef {
 					if minValue, err := strconv.ParseUint(strings.TrimPrefix(validation, "min="), 10, 64); err == nil {
 						result.Value.MinItems = minValue
 					}
+				case strings.HasPrefix(validation, "min=") && fieldKind == reflect.String:
+					if minValue, err := strconv.ParseUint(strings.TrimPrefix(validation, "min="), 10, 64); err == nil {
+						result.Value.MinLength = minValue
+					}
 				case strings.HasPrefix(validation, "min="):
 					if minValue, err := strconv.ParseFloat(strings.TrimPrefix(validation, "min="), 64); err == nil {
 						result.Value.Min = &minValue
+						result.Value.Default = minValue
 					}
 				case strings.HasPrefix(validation, "max=") && (fieldKind == reflect.Slice || fieldKind == reflect.Array):
 					if maxValue, err := strconv.ParseUint(strings.TrimPrefix(validation, "max="), 10, 64); err == nil {
 						result.Value.MaxItems = &maxValue
+					}
+				case strings.HasPrefix(validation, "max=") && fieldKind == reflect.String:
+					if maxValue, err := strconv.ParseUint(strings.TrimPrefix(validation, "max="), 10, 64); err == nil {
+						result.Value.MaxLength = &maxValue
 					}
 				case strings.HasPrefix(validation, "max="):
 					if maxValue, err := strconv.ParseFloat(strings.TrimPrefix(validation, "max="), 64); err == nil {
@@ -358,7 +367,7 @@ func generateSchema(t reflect.Type) *SchemaRef {
 			schema.Properties[fieldName] = result
 		}
 
-		appendToAcquiredSchemas(ref, &SchemaRef{
+		setToAcquiredSchemas(ref, &SchemaRef{
 			Value: schema,
 		})
 		return &SchemaRef{
@@ -380,6 +389,7 @@ func getDefaultSchema(t reflect.Type) *Schema {
 	switch t.Kind() {
 	case reflect.Bool:
 		schema.Type = &Types{"boolean"}
+		schema.Default = false
 
 	case reflect.Int:
 		schema.Type = &Types{"integer"}
@@ -387,18 +397,21 @@ func getDefaultSchema(t reflect.Type) *Schema {
 		schema.Max = &maxInt
 		schema.ExclusiveMin = false
 		schema.ExclusiveMax = false
+		schema.Default = 0
 	case reflect.Int8:
 		schema.Type = &Types{"integer"}
 		schema.Min = &minInt8
 		schema.Max = &maxInt8
 		schema.ExclusiveMin = false
 		schema.ExclusiveMax = false
+		schema.Default = 0
 	case reflect.Int16:
 		schema.Type = &Types{"integer"}
 		schema.Min = &minInt16
 		schema.Max = &maxInt16
 		schema.ExclusiveMin = false
 		schema.ExclusiveMax = false
+		schema.Default = 0
 	case reflect.Int32:
 		schema.Type = &Types{"integer"}
 		schema.Format = "int32"
@@ -406,6 +419,7 @@ func getDefaultSchema(t reflect.Type) *Schema {
 		schema.Max = &maxInt32
 		schema.ExclusiveMin = false
 		schema.ExclusiveMax = false
+		schema.Default = 0
 	case reflect.Int64:
 		schema.Type = &Types{"integer"}
 		schema.Format = "int64"
@@ -413,36 +427,42 @@ func getDefaultSchema(t reflect.Type) *Schema {
 		schema.Max = &maxInt64
 		schema.ExclusiveMin = false
 		schema.ExclusiveMax = false
+		schema.Default = 0
 	case reflect.Uint:
 		schema.Type = &Types{"integer"}
 		schema.Min = &zeroInt
 		schema.Max = &maxUint
 		schema.ExclusiveMin = false
 		schema.ExclusiveMax = false
+		schema.Default = 0
 	case reflect.Uint8:
 		schema.Type = &Types{"integer"}
 		schema.Min = &zeroInt
 		schema.Max = &maxUint8
 		schema.ExclusiveMin = false
 		schema.ExclusiveMax = false
+		schema.Default = 0
 	case reflect.Uint16:
 		schema.Type = &Types{"integer"}
 		schema.Min = &zeroInt
 		schema.Max = &maxUint16
 		schema.ExclusiveMin = false
 		schema.ExclusiveMax = false
+		schema.Default = 0
 	case reflect.Uint32:
 		schema.Type = &Types{"integer"}
 		schema.Min = &zeroInt
 		schema.Max = &maxUint32
 		schema.ExclusiveMin = false
 		schema.ExclusiveMax = false
+		schema.Default = 0
 	case reflect.Uint64:
 		schema.Type = &Types{"integer"}
 		schema.Min = &zeroInt
 		schema.Max = &maxUint64
 		schema.ExclusiveMin = false
 		schema.ExclusiveMax = false
+		schema.Default = 0
 
 	case reflect.Float32:
 		schema.Type = &Types{"number"}
@@ -451,6 +471,7 @@ func getDefaultSchema(t reflect.Type) *Schema {
 		schema.Max = &maxFloat32
 		schema.ExclusiveMin = false
 		schema.ExclusiveMax = false
+		schema.Default = 0
 	case reflect.Float64:
 		schema.Type = &Types{"number"}
 		schema.Format = "double"
@@ -458,9 +479,11 @@ func getDefaultSchema(t reflect.Type) *Schema {
 		schema.Max = &maxFloat64
 		schema.ExclusiveMin = false
 		schema.ExclusiveMax = false
+		schema.Default = 0
 
 	case reflect.String:
 		schema.Type = &Types{"string"}
+		schema.Default = ""
 
 	case reflect.Array:
 		if t.Name() == "UUID" && t.Elem().Kind() == reflect.Uint8 {
