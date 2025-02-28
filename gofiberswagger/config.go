@@ -2,7 +2,7 @@ package gofiberswagger
 
 import "github.com/getkin/kin-openapi/openapi3"
 
-// https://github.com/OAI/OpenAPI-Specification/blob/main/versions/3.0.3.md#openapi-object
+// https://github.com/OAI/OpenAPI-Specification/blob/main/versions/3.1.1.md#openapi-object
 type SwaggerConfig = openapi3.T
 
 type Config struct {

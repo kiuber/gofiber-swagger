@@ -97,6 +97,7 @@ func generateSchema(t reflect.Type) *SchemaRef {
 			fieldTypeName := fieldType.Name()
 			fieldTypePkgPath := fieldType.PkgPath()
 			fieldKind := fieldType.Kind()
+
 			// for debugging purposes:
 			// log.Println(field)
 
