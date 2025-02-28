@@ -56,6 +56,8 @@ type Tags = openapi3.Tags
 type Tag = openapi3.Tag
 type NewResponsesOption = openapi3.NewResponsesOption
 type AdditionalProperties = openapi3.AdditionalProperties
+type XML = openapi3.XML
+type Discriminator = openapi3.Discriminator
 
 // ----- Request Body ----- //
 var DefaultRequestBodyConsumes = []string{

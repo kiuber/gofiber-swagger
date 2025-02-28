@@ -88,6 +88,11 @@ func generateSchema(t reflect.Type) *SchemaRef {
 				continue
 			}
 
+			xmlTag, xmlTagExists := field.Tag.Lookup("xml")
+			if xmlTag == "-" || (xmlTagExists && field.Name == "XMLName") {
+				continue
+			}
+
 			isNullable := false
 			fieldType := field.Type
 			for fieldType.Kind() == reflect.Pointer {
@@ -274,13 +279,35 @@ func generateSchema(t reflect.Type) *SchemaRef {
 				case "string":
 					result.Value.Type = &Types{"string"}
 				case "omitempty":
+					result.Value.Nullable = true
 					result.Value.Description += " omitempty "
 				case "omitzero":
+					result.Value.Nullable = true
 					result.Value.Description += " omitzero "
 				}
 			}
 
-			// todo: handle xml tag
+			// handle xml tag
+			xmlTagOptions := strings.Split(xmlTag, ",")
+			if len(xmlTagOptions) > 0 && result.Value.XML == nil {
+				result.Value.XML = &XML{}
+			}
+			if len(xmlTagOptions) > 0 && xmlTagOptions[0] != "" {
+				result.Value.XML.Name = xmlTagOptions[0]
+			}
+			for i := 1; i < len(xmlTagOptions); i++ {
+				option := xmlTagOptions[i]
+				switch option {
+				case "attr":
+					result.Value.XML.Attribute = true
+				case "chardata", "cdata", "innerxml", "comment":
+					result.Value.Description += " " + option + " "
+				case "omitempty":
+					result.Value.Nullable = true
+					result.Value.Description += " omitempty "
+				}
+				// todo: handle `name>first` / `a>b>c` syntax
+			}
 
 			// handle validate tag
 			validateTag := field.Tag.Get("validate")

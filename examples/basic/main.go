@@ -36,7 +36,7 @@ func main() {
 	wildcard_group.Get("/2/*/*", nil, HelloHandler)
 
 	// You can easily specify Request body and response body type.
-	// From that, a schema will get generated. This schema respects the type given + the `json` and `validate` tags.
+	// From that, a schema will get generated. This schema respects the type given + the `json`, `xml` and `validate` tags.
 	req_body_group := router.Group("/request_body/")
 	req_body_group.Post("/", &gofiberswagger.RouteInfo{
 		RequestBody: gofiberswagger.NewRequestBody[HandlerWithRequestBodyRequest](),
