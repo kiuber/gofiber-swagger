@@ -26,7 +26,7 @@ func main() {
 			// We can also specify additonal parameters, for example query parameters
 			gofiberswagger.NewQueryParameter("queryParam"),
 		),
-		RequestBody: gofiberswagger.NewRequestBodyJSON[POSTHandlerWithIdRequestBody](),
+		RequestBody: gofiberswagger.NewRequestBody[POSTHandlerWithIdRequestBody](),
 		Responses: gofiberswagger.NewResponses(
 			gofiberswagger.NewResponseInfo[POSTHandlerWithIdResponse]("200", "example response 👀"),
 		),

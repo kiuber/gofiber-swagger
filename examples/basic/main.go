@@ -39,7 +39,7 @@ func main() {
 	// From that, a schema will get generated. This schema respects the type given + the `json` and `validate` tags.
 	req_body_group := router.Group("/request_body/")
 	req_body_group.Post("/", &gofiberswagger.RouteInfo{
-		RequestBody: gofiberswagger.NewRequestBodyJSON[HandlerWithRequestBodyRequest](),
+		RequestBody: gofiberswagger.NewRequestBody[HandlerWithRequestBodyRequest](),
 		Responses: gofiberswagger.NewResponses(
 			gofiberswagger.NewResponseInfo[HandlerWithBodyResponse]("200", "example response 👀"),
 		),

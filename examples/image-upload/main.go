@@ -10,7 +10,6 @@ import (
 func main() {
 	app := fiber.New()
 
-	// equivalent to:
 	router := gofiberswagger.NewRouter(app)
 	router.Get("/", nil, HelloHandler)
 	router.Post("/upload", &gofiberswagger.RouteInfo{

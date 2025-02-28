@@ -8,11 +8,10 @@ import (
 func main() {
 	app := fiber.New()
 
-	// equivalent to:
 	router := gofiberswagger.NewRouter(app)
 	router.Get("/", nil, HelloHandler)
 	router.Post("/enum", &gofiberswagger.RouteInfo{
-		RequestBody: gofiberswagger.NewRequestBodyFormData[EnumHandlerRequest](),
+		RequestBody: gofiberswagger.NewRequestBody[EnumHandlerRequest](),
 		Responses: gofiberswagger.NewResponses(
 			gofiberswagger.NewResponseInfo[EnumHandlerRequest]("200", "OK"),
 		),
