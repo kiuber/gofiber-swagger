@@ -58,41 +58,51 @@ type NewResponsesOption = openapi3.NewResponsesOption
 type AdditionalProperties = openapi3.AdditionalProperties
 
 // ----- Request Body ----- //
+var DefaultRequestBodyConsumes = []string{
+	"application/json", "application/xml", "application/x-www-form-urlencoded", "multipart/form-data", // all supported by the `c.Bind().Body()` function
+}
+
 func NewRequestBody[T any]() *RequestBodyRef {
 	return NewRequestBodyExtended[T]("", false)
 }
 func NewRequestBodyExtended[T any](description string, required bool) *RequestBodyRef {
-	request_body := openapi3.NewRequestBody()
-	request_body.WithDescription(description)
-	request_body.WithRequired(required)
-	schema := CreateSchema[T]()
-	request_body.WithSchemaRef(schema, []string{
-		"application/json", "application/xml", "application/x-www-form-urlencoded", "multipart/form-data", // all supported by the `c.Bind().Body()` function
-	})
-	return &RequestBodyRef{Value: request_body}
+	return NewRequestBodyFullyCustom[T](description, required, DefaultRequestBodyConsumes)
 }
 
 func NewRequestBodyJSON[T any]() *RequestBodyRef {
 	return NewRequestBodyJSONExtended[T]("", false)
 }
 func NewRequestBodyJSONExtended[T any](description string, required bool) *RequestBodyRef {
-	request_body := openapi3.NewRequestBody()
-	request_body.WithDescription(description)
-	request_body.WithRequired(required)
-	schema := CreateSchema[T]()
-	request_body.WithJSONSchemaRef(schema)
-	return &RequestBodyRef{Value: request_body}
+	return NewRequestBodyFullyCustom[T](description, required, []string{"application/json"})
 }
 
 func NewRequestBodyFormData[T any]() *RequestBodyRef {
 	return NewRequestBodyFormDataExtended[T]("", false)
 }
 func NewRequestBodyFormDataExtended[T any](description string, required bool) *RequestBodyRef {
+	return NewRequestBodyFullyCustom[T](description, required, []string{"multipart/form-data"})
+}
+
+func NewRequestBodyFormUrlEncodedData[T any]() *RequestBodyRef {
+	return NewRequestBodyFormUrlEncodedDataExtended[T]("", false)
+}
+func NewRequestBodyFormUrlEncodedDataExtended[T any](description string, required bool) *RequestBodyRef {
+	return NewRequestBodyFullyCustom[T](description, required, []string{"application/x-www-form-urlencoded"})
+}
+
+func NewRequestBodyXML[T any]() *RequestBodyRef {
+	return NewRequestBodyXMLExtended[T]("", false)
+}
+func NewRequestBodyXMLExtended[T any](description string, required bool) *RequestBodyRef {
+	return NewRequestBodyFullyCustom[T](description, required, []string{"application/xml"})
+}
+
+func NewRequestBodyFullyCustom[T any](description string, required bool, consumes []string) *RequestBodyRef {
 	request_body := openapi3.NewRequestBody()
 	request_body.WithDescription(description)
 	request_body.WithRequired(required)
 	schema := CreateSchema[T]()
-	request_body.WithFormDataSchemaRef(schema)
+	request_body.WithSchemaRef(schema, consumes)
 	return &RequestBodyRef{Value: request_body}
 }
 
