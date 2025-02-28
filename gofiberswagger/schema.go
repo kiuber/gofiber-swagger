@@ -243,8 +243,8 @@ func generateSchema(t reflect.Type) *SchemaRef {
 					Items: generateSchema(fieldType.Elem()),
 				}}
 
-			// handle general maps
-			case fieldKind == reflect.Map:
+			// handle general maps / interface{} / any
+			case fieldKind == reflect.Map || fieldKind == reflect.Interface:
 				result = &SchemaRef{Value: &Schema{
 					Type: &Types{"object"},
 				}}
