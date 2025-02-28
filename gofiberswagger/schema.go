@@ -94,7 +94,7 @@ func generateSchema(t reflect.Type) *SchemaRef {
 			}
 
 			// for debugging purposes:
-			// log.Println(fieldType, fieldTypeName, fieldKind)
+			// log.Println(field)
 
 			// create schema for the field. First handle special cases!
 			var result *SchemaRef = nil
@@ -312,15 +312,34 @@ func generateSchema(t reflect.Type) *SchemaRef {
 					result.Value.UniqueItems = true
 				case strings.HasPrefix(validation, "omitnil"):
 					result.Value.Description += " omitnil "
-				case strings.HasPrefix(validation, "oneof="):
-					options := strings.Split(strings.TrimPrefix(validation, "oneof="), " ")
+				case strings.HasPrefix(validation, "oneof=") || implementsSwaggerEnum(fieldType):
+					var options []any
+
+					// oneof is more important, since that's what the validator is using...
+					// in that case, ignore swagger enum options and use oneof options instead
+					has_oneof_validation := strings.HasPrefix(validation, "oneof=")
+					if !has_oneof_validation && implementsSwaggerEnum(fieldType) {
+						options = getSwaggerEnumValues(fieldType)
+					}
+					if has_oneof_validation {
+						options = []any{}
+						stringOptions := strings.Split(strings.TrimPrefix(validation, "oneof="), " ")
+						for _, option := range stringOptions {
+							options = append(options, option) // Convert each string to `any` (which is `interface{}`)
+						}
+					}
+
 					if result.Value.OneOf == nil {
 						result.Value.OneOf = []*SchemaRef{}
 					}
+					if result.Value.Enum == nil {
+						result.Value.Enum = []any{}
+					}
 					for _, option := range options {
-						option_schema := NewStringSchema()
-						option_schema.Default = option
-						result.Value.OneOf = append(result.Value.OneOf, &SchemaRef{Value: option_schema})
+						option_schema := generateSchema(fieldType)
+						option_schema.Value.Default = option
+						result.Value.OneOf = append(result.Value.OneOf, option_schema)
+						result.Value.Enum = append(result.Value.Enum, option)
 					}
 				}
 			}
