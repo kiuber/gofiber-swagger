@@ -279,6 +279,8 @@ func generateSchema(t reflect.Type) *SchemaRef {
 				}
 			}
 
+			// todo: handle xml tag
+
 			// handle validate tag
 			validateTag := field.Tag.Get("validate")
 			validateTagOptions := strings.Split(validateTag, ",")
