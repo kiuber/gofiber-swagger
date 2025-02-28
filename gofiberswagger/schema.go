@@ -83,7 +83,7 @@ func generateSchema(t reflect.Type) *SchemaRef {
 		for i := range t.NumField() {
 			field := t.Field(i)
 
-			jsonTag := field.Tag.Get("json")
+			jsonTag, jsonTagExists := field.Tag.Lookup("json")
 			if jsonTag == "-" {
 				continue
 			}
@@ -270,7 +270,7 @@ func generateSchema(t reflect.Type) *SchemaRef {
 			// handle json tag
 			fieldName := field.Name
 			jsonTagOptions := strings.Split(jsonTag, ",")
-			if len(jsonTagOptions) > 0 && jsonTagOptions[0] != "" {
+			if jsonTagExists && len(jsonTagOptions) > 0 && jsonTagOptions[0] != "" {
 				fieldName = jsonTagOptions[0]
 			}
 			for i := 1; i < len(jsonTagOptions); i++ {
@@ -289,10 +289,10 @@ func generateSchema(t reflect.Type) *SchemaRef {
 
 			// handle xml tag
 			xmlTagOptions := strings.Split(xmlTag, ",")
-			if len(xmlTagOptions) > 0 && result.Value.XML == nil {
+			if xmlTagExists && len(xmlTagOptions) > 0 && result.Value.XML == nil {
 				result.Value.XML = &XML{}
 			}
-			if len(xmlTagOptions) > 0 && xmlTagOptions[0] != "" {
+			if xmlTagExists && len(xmlTagOptions) > 0 && xmlTagOptions[0] != "" {
 				result.Value.XML.Name = xmlTagOptions[0]
 			}
 			for i := 1; i < len(xmlTagOptions); i++ {
@@ -307,6 +307,11 @@ func generateSchema(t reflect.Type) *SchemaRef {
 					result.Value.Description += " omitempty "
 				}
 				// todo: handle `name>first` / `a>b>c` syntax
+			}
+
+			// handle enum values
+			if implementsSwaggerEnum(fieldType) {
+				handleEnumValues(result, getSwaggerEnumValues(fieldType), false, fieldType)
 			}
 
 			// handle validate tag
@@ -355,35 +360,15 @@ func generateSchema(t reflect.Type) *SchemaRef {
 					result.Value.UniqueItems = true
 				case strings.HasPrefix(validation, "omitnil"):
 					result.Value.Description += " omitnil "
-				case strings.HasPrefix(validation, "oneof=") || implementsSwaggerEnum(fieldType):
-					var options []any
-
-					// oneof is more important, since that's what the validator is using...
-					// in that case, ignore swagger enum options and use oneof options instead
-					has_oneof_validation := strings.HasPrefix(validation, "oneof=")
-					if !has_oneof_validation && implementsSwaggerEnum(fieldType) {
-						options = getSwaggerEnumValues(fieldType)
+				case strings.HasPrefix(validation, "oneof="):
+					// oneof is more important than all other options since that's what the validator is using...
+					// in that case, ignore and overwrite every other enum / OneOf options
+					options := []any{}
+					stringOptions := strings.Split(strings.TrimPrefix(validation, "oneof="), " ")
+					for _, option := range stringOptions {
+						options = append(options, option)
 					}
-					if has_oneof_validation {
-						options = []any{}
-						stringOptions := strings.Split(strings.TrimPrefix(validation, "oneof="), " ")
-						for _, option := range stringOptions {
-							options = append(options, option) // Convert each string to `any` (which is `interface{}`)
-						}
-					}
-
-					if result.Value.OneOf == nil {
-						result.Value.OneOf = []*SchemaRef{}
-					}
-					if result.Value.Enum == nil {
-						result.Value.Enum = []any{}
-					}
-					for _, option := range options {
-						option_schema := generateSchema(fieldType)
-						option_schema.Value.Default = option
-						result.Value.OneOf = append(result.Value.OneOf, option_schema)
-						result.Value.Enum = append(result.Value.Enum, option)
-					}
+					handleEnumValues(result, options, true, fieldType)
 				}
 			}
 			result.Value.Title = fieldName
@@ -556,4 +541,21 @@ func isNullTypeWrapper(fieldType reflect.Type, nullFieldName string, uniqueField
 	}
 
 	return isNullType(possible_null_type_field.Type, nullFieldName, uniqueFieldName)
+}
+
+// modifies the `result *SchemaRef`
+func handleEnumValues(result *SchemaRef, options []any, overwrite bool, fieldType reflect.Type) {
+	if result.Value.OneOf == nil || overwrite {
+		result.Value.OneOf = []*SchemaRef{}
+	}
+	if result.Value.Enum == nil || overwrite {
+		result.Value.Enum = []any{}
+	}
+	for _, option := range options {
+		option_schema := generateSchema(fieldType)
+		option_schema.Value.Default = option
+		result.Value.OneOf = append(result.Value.OneOf, option_schema)
+		result.Value.Enum = append(result.Value.Enum, option)
+	}
+	result.Value.Default = nil
 }
