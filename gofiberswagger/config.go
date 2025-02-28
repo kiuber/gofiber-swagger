@@ -17,7 +17,7 @@ type Config struct {
 }
 
 var DefaultSwaggerConfig = SwaggerConfig{
-	OpenAPI: "3.0.0",
+	OpenAPI: "3.1.1",
 	Info: &Info{
 		Title:   DefaultUIConfig.Title,
 		Version: "0.0.1",
