@@ -71,6 +71,15 @@ func generateSchema(t reflect.Type) *SchemaRef {
 	}
 
 	schema := getDefaultSchema(t)
+
+	// Handle empty struct{}
+	if t.Kind() == reflect.Struct && t.NumField() == 0 {
+		schema.Type = &Types{"object"}
+		return &SchemaRef{
+			Value: schema,
+		}
+	}
+
 	if t.Kind() == reflect.Struct {
 		schema.Title = tName
 		schema.Type = &Types{"object"}
