@@ -218,6 +218,15 @@ func NewQueryParameter(name string) *ParameterRef {
 	})
 }
 
+func NewQueryParameterRequired(name string) *ParameterRef {
+	return NewQueryParameterExtended(name, &Schema{
+		Type:            &Types{"string"},
+		Required:        []string{name},
+		AllowEmptyValue: false,
+		Nullable:        false,
+	})
+}
+
 func NewQueryParameterWithType(name string, Type string) *ParameterRef {
 	return NewQueryParameterExtended(name, &Schema{
 		Type: &Types{Type},
@@ -240,6 +249,15 @@ func NewHeaderParameter(name string) *ParameterRef {
 	})
 }
 
+func NewHeaderParameterRequired(name string) *ParameterRef {
+	return NewHeaderParameterExtended(name, &Schema{
+		Type:            &Types{"string"},
+		Required:        []string{name},
+		AllowEmptyValue: false,
+		Nullable:        false,
+	})
+}
+
 func NewHeaderParameterWithType(name string, Type string) *ParameterRef {
 	return NewHeaderParameterExtended(name, &Schema{
 		Type: &Types{Type},
@@ -259,6 +277,15 @@ func INewCookieParameter[T any](name string) *ParameterRef {
 func NewCookieParameter(name string) *ParameterRef {
 	return NewCookieParameterExtended(name, &Schema{
 		Type: &Types{"string"},
+	})
+}
+
+func NewCookieParameterRequired(name string) *ParameterRef {
+	return NewCookieParameterExtended(name, &Schema{
+		Type:            &Types{"string"},
+		Required:        []string{name},
+		AllowEmptyValue: false,
+		Nullable:        false,
 	})
 }
 
