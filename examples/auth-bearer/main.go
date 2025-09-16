@@ -1,6 +1,8 @@
 package main
 
 import (
+	"log"
+
 	"github.com/TDiblik/gofiber-swagger/gofiberswagger"
 	"github.com/gofiber/fiber/v3"
 )
@@ -52,7 +54,7 @@ func main() {
 		SwaggerUI: gofiberswagger.DefaultUIConfig,
 	})
 
-	app.Listen(":3000")
+	log.Fatal(app.Listen(":3000"))
 }
 
 func HelloHandler(c fiber.Ctx) error {

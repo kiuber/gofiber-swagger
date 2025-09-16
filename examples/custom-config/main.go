@@ -2,6 +2,7 @@ package main
 
 import (
 	"html/template"
+	"log"
 
 	"github.com/TDiblik/gofiber-swagger/gofiberswagger"
 	"github.com/gofiber/fiber/v3"
@@ -61,7 +62,7 @@ func main() {
 	// - json at /swagger/swagger.json
 	// - yaml at /swagger/swagger.yaml
 
-	app.Listen(":3000")
+	log.Fatal(app.Listen(":3000"))
 }
 
 // ----- Hello Handler and it's types ----- //

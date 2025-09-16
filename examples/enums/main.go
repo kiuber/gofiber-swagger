@@ -1,6 +1,8 @@
 package main
 
 import (
+	"log"
+
 	"github.com/TDiblik/gofiber-swagger/gofiberswagger"
 	"github.com/gofiber/fiber/v3"
 )
@@ -23,7 +25,7 @@ func main() {
 	// - yaml at /swagger/swagger.yaml
 	gofiberswagger.Register(app, gofiberswagger.DefaultConfig)
 
-	app.Listen(":3000")
+	log.Fatal(app.Listen(":3000"))
 }
 
 // ----- Hello Handler and it's types ----- //
