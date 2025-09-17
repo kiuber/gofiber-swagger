@@ -29,10 +29,10 @@ func getFromAcquiredSchemas(ref string) *SchemaRef {
 
 func CreateSchema[T any]() *SchemaRef {
 	var t T
-	return generateSchema(reflect.TypeOf(t))
+	return generateSchema(reflect.TypeOf(t), false)
 }
 
-func generateSchema(t reflect.Type) *SchemaRef {
+func generateSchema(t reflect.Type, stopRecursion bool) *SchemaRef {
 	for t.Kind() == reflect.Pointer {
 		t = t.Elem()
 	}
@@ -71,6 +71,16 @@ func generateSchema(t reflect.Type) *SchemaRef {
 		return &SchemaRef{
 			Value: schema,
 		}
+	}
+
+	// handle singular enums
+	if !stopRecursion && implementsSwaggerEnum(t) {
+		options := getSwaggerEnumValues(t)
+		enumSchema := &SchemaRef{
+			Value: getDefaultSchema(t),
+		}
+		handleEnumValues(enumSchema, options, false, t)
+		return enumSchema
 	}
 
 	if t.Kind() == reflect.Struct {
@@ -232,7 +242,7 @@ func generateSchema(t reflect.Type) *SchemaRef {
 
 			// handle map[string]object
 			case fieldKind == reflect.Map && fieldType.Key().Kind() == reflect.String:
-				valueSchema := generateSchema(fieldType.Elem())
+				valueSchema := generateSchema(fieldType.Elem(), false)
 				has := true
 				result = &SchemaRef{Value: &Schema{
 					Type: &Types{"object"},
@@ -244,13 +254,13 @@ func generateSchema(t reflect.Type) *SchemaRef {
 
 			// handle general structs
 			case fieldKind == reflect.Struct:
-				result = generateSchema(fieldType)
+				result = generateSchema(fieldType, false)
 
 			// handle general slices / arrays
 			case fieldKind == reflect.Slice, fieldKind == reflect.Array:
 				result = &SchemaRef{Value: &Schema{
 					Type:  &Types{"array"},
-					Items: generateSchema(fieldType.Elem()),
+					Items: generateSchema(fieldType.Elem(), false),
 				}}
 
 			// handle general maps / interface{} / any
@@ -552,7 +562,7 @@ func handleEnumValues(result *SchemaRef, options []any, overwrite bool, fieldTyp
 		result.Value.Enum = []any{}
 	}
 	for _, option := range options {
-		option_schema := generateSchema(fieldType)
+		option_schema := generateSchema(fieldType, true)
 		option_schema.Value.Default = option
 		result.Value.OneOf = append(result.Value.OneOf, option_schema)
 		result.Value.Enum = append(result.Value.Enum, option)

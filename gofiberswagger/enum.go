@@ -13,7 +13,7 @@ func implementsSwaggerEnum(t reflect.Type) bool {
 
 	tKind := t.Kind()
 	enumInterface := reflect.TypeOf((*ISwaggerEnum)(nil)).Elem()
-	return t.Implements(enumInterface) || (tKind != reflect.Ptr && tKind != reflect.UnsafePointer && tKind != reflect.Invalid && reflect.PointerTo(t).Implements(enumInterface))
+	return t.Implements(enumInterface) || (tKind != reflect.Pointer && tKind != reflect.UnsafePointer && tKind != reflect.Invalid && reflect.PointerTo(t).Implements(enumInterface))
 }
 
 // call implementsSwaggerEnum beforehand!
