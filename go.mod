@@ -4,7 +4,7 @@ go 1.25.0
 
 require (
 	github.com/getkin/kin-openapi v0.133.0
-	github.com/gofiber/fiber/v3 v3.0.0-rc.1
+	github.com/gofiber/fiber/v3 v3.0.0-rc.2
 	github.com/google/uuid v1.6.0
 	gopkg.in/yaml.v3 v3.0.1
 )
