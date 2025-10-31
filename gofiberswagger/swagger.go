@@ -98,6 +98,13 @@ func Register(app *fiber.App, config *Config) error {
 		config.Swagger.Paths.Set(corrected_path, path_item)
 	}
 
+	if config.CallbackBeforeGenerate != nil {
+		err := config.CallbackBeforeGenerate(config)
+		if err != nil {
+			return err
+		}
+	}
+
 	index_page, err := generateIndexPage(swaggerUIConfigDefault(config.SwaggerUI))
 	if err != nil {
 		return err
