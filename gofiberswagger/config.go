@@ -14,6 +14,7 @@ type Config struct {
 	FilterOutAppUse          bool
 	RequiredAuth             *openapi3.SecurityRequirements
 	AutomaticallyRequireAuth bool
+	CallbackBeforeGenerate   func(config *Config) error
 }
 
 var DefaultSwaggerConfig = SwaggerConfig{
@@ -34,6 +35,7 @@ var DefaultConfig = Config{
 	FilterOutAppUse:          true,
 	RequiredAuth:             nil,
 	AutomaticallyRequireAuth: false,
+	CallbackBeforeGenerate:   nil,
 }
 
 func swaggerConfigDefault(config SwaggerConfig) SwaggerConfig {
