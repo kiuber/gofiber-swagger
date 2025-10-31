@@ -15,7 +15,7 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
-func Register(app *fiber.App, config Config) error {
+func Register(app *fiber.App, config *Config) error {
 	config.Swagger = swaggerConfigDefault(config.Swagger)
 	config.SwaggerUI = swaggerUIConfigDefault(config.SwaggerUI)
 

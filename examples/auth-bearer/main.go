@@ -31,7 +31,7 @@ func main() {
 	// - UI at /swagger/
 	// - json at /swagger/swagger.json
 	// - yaml at /swagger/swagger.yaml
-	gofiberswagger.Register(app, gofiberswagger.Config{
+	gofiberswagger.Register(app, &gofiberswagger.Config{
 		Swagger: gofiberswagger.SwaggerConfig{
 			OpenAPI: gofiberswagger.DefaultSwaggerConfig.OpenAPI,
 			Info:    gofiberswagger.DefaultSwaggerConfig.Info,
