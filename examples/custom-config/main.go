@@ -17,7 +17,7 @@ func main() {
 
 	// Provide the custom options you wanna.
 	// You can go all out and basically use ANY openapi property!
-	gofiberswagger.Register(app, gofiberswagger.Config{
+	gofiberswagger.Register(app, &gofiberswagger.Config{
 		Swagger: gofiberswagger.SwaggerConfig{
 			OpenAPI: "3.0.0",
 			Info: &gofiberswagger.Info{

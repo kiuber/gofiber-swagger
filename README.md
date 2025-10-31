@@ -66,7 +66,7 @@ func main() {
     // - UI at /swagger/
     // - json at /swagger/swagger.json
     // - yaml at /swagger/swagger.yaml
-	gofiberswagger.Register(app, gofiberswagger.DefaultConfig)
+	gofiberswagger.Register(app, &gofiberswagger.DefaultConfig)
 
 	log.Fatal(app.Listen(":3000"))
 }
