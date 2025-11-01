@@ -65,8 +65,8 @@ func routerRegisterRouteInternal(method string, path string, internalGroup strin
 	if info == nil {
 		info = &RouteInfo{}
 	}
-	if internalGroup != "" {
-		info.Tags = append(info.Tags, internalGroup)
-	}
+	//if internalGroup != "" {
+	//	info.Tags = append(info.Tags, internalGroup)
+	//}
 	RegisterRoute(method, internalGroup+path, info)
 }
