@@ -12,8 +12,13 @@ type SwaggerRouter struct {
 func NewRouter(app *fiber.App) SwaggerRouter {
 	return NewRouterFromRouter(app.Group("/"))
 }
+
 func NewRouterFromRouter(r fiber.Router) SwaggerRouter {
 	return SwaggerRouter{internalGroup: "", Router: r}
+}
+
+func (router SwaggerRouter) Use(args any) fiber.Router {
+	return router.Router.Use(args)
 }
 
 func (router SwaggerRouter) Get(path string, docs *RouteInfo, handler any, handlers ...any) fiber.Router {
