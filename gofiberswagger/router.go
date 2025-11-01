@@ -16,6 +16,10 @@ func NewRouterFromRouter(r fiber.Router) SwaggerRouter {
 	return SwaggerRouter{internalGroup: "", Router: r}
 }
 
+func (router SwaggerRouter) Use(args any) fiber.Router {
+	return router.Router.Use(args)
+}
+
 func (router SwaggerRouter) Get(path string, docs *RouteInfo, handler fiber.Handler, middleware ...fiber.Handler) fiber.Router {
 	routerRegisterRouteInternal("GET", path, router.internalGroup, docs)
 	return router.Router.Get(path, handler, middleware...)
