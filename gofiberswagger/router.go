@@ -16,43 +16,43 @@ func NewRouterFromRouter(r fiber.Router) SwaggerRouter {
 	return SwaggerRouter{internalGroup: "", Router: r}
 }
 
-func (router SwaggerRouter) Get(path string, docs *RouteInfo, handler fiber.Handler, middleware ...fiber.Handler) fiber.Router {
+func (router SwaggerRouter) Get(path string, docs *RouteInfo, handler any, handlers ...any) fiber.Router {
 	routerRegisterRouteInternal("GET", path, router.internalGroup, docs)
-	return router.Router.Get(path, handler, middleware...)
+	return router.Router.Get(path, handler, handlers...)
 }
-func (router SwaggerRouter) Head(path string, docs *RouteInfo, handler fiber.Handler, middleware ...fiber.Handler) fiber.Router {
+func (router SwaggerRouter) Head(path string, docs *RouteInfo, handler any, handlers ...any) fiber.Router {
 	routerRegisterRouteInternal("HEAD", path, router.internalGroup, docs)
-	return router.Router.Head(path, handler, middleware...)
+	return router.Router.Head(path, handler, handlers...)
 }
-func (router SwaggerRouter) Post(path string, docs *RouteInfo, handler fiber.Handler, middleware ...fiber.Handler) fiber.Router {
+func (router SwaggerRouter) Post(path string, docs *RouteInfo, handler any, handlers ...any) fiber.Router {
 	routerRegisterRouteInternal("POST", path, router.internalGroup, docs)
-	return router.Router.Post(path, handler, middleware...)
+	return router.Router.Post(path, handler, handlers...)
 }
-func (router SwaggerRouter) Put(path string, docs *RouteInfo, handler fiber.Handler, middleware ...fiber.Handler) fiber.Router {
+func (router SwaggerRouter) Put(path string, docs *RouteInfo, handler any, handlers ...any) fiber.Router {
 	routerRegisterRouteInternal("PUT", path, router.internalGroup, docs)
-	return router.Router.Put(path, handler, middleware...)
+	return router.Router.Put(path, handler, handlers...)
 }
-func (router SwaggerRouter) Delete(path string, docs *RouteInfo, handler fiber.Handler, middleware ...fiber.Handler) fiber.Router {
+func (router SwaggerRouter) Delete(path string, docs *RouteInfo, handler any, handlers ...any) fiber.Router {
 	routerRegisterRouteInternal("DELETE", path, router.internalGroup, docs)
-	return router.Router.Delete(path, handler, middleware...)
+	return router.Router.Delete(path, handler, handlers...)
 }
-func (router SwaggerRouter) Connect(path string, docs *RouteInfo, handler fiber.Handler, middleware ...fiber.Handler) fiber.Router {
+func (router SwaggerRouter) Connect(path string, docs *RouteInfo, handler any, handlers ...any) fiber.Router {
 	routerRegisterRouteInternal("CONNECT", path, router.internalGroup, docs)
-	return router.Router.Connect(path, handler, middleware...)
+	return router.Router.Connect(path, handler, handlers...)
 }
-func (router SwaggerRouter) Options(path string, docs *RouteInfo, handler fiber.Handler, middleware ...fiber.Handler) fiber.Router {
+func (router SwaggerRouter) Options(path string, docs *RouteInfo, handler any, handlers ...any) fiber.Router {
 	routerRegisterRouteInternal("OPTIONS", path, router.internalGroup, docs)
-	return router.Router.Options(path, handler, middleware...)
+	return router.Router.Options(path, handler, handlers...)
 }
-func (router SwaggerRouter) Trace(path string, docs *RouteInfo, handler fiber.Handler, middleware ...fiber.Handler) fiber.Router {
+func (router SwaggerRouter) Trace(path string, docs *RouteInfo, handler any, handlers ...any) fiber.Router {
 	routerRegisterRouteInternal("TRACE", path, router.internalGroup, docs)
-	return router.Router.Trace(path, handler, middleware...)
+	return router.Router.Trace(path, handler, handlers...)
 }
-func (router SwaggerRouter) Patch(path string, docs *RouteInfo, handler fiber.Handler, middleware ...fiber.Handler) fiber.Router {
+func (router SwaggerRouter) Patch(path string, docs *RouteInfo, handler any, handlers ...any) fiber.Router {
 	routerRegisterRouteInternal("PATCH", path, router.internalGroup, docs)
-	return router.Router.Patch(path, handler, middleware...)
+	return router.Router.Patch(path, handler, handlers...)
 }
-func (router *SwaggerRouter) Group(prefix string, handlers ...fiber.Handler) SwaggerRouter {
+func (router *SwaggerRouter) Group(prefix string, handlers ...any) SwaggerRouter {
 	return SwaggerRouter{internalGroup: router.internalGroup + prefix, Router: router.Router.Group(prefix, handlers...)}
 }
 
