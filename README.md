@@ -124,3 +124,4 @@ func POSTHandlerWithId(c fiber.Ctx) error {
 ### Notes
 
 Even though this library is in the early stages of development, from my personal experience, it's quite stable 🤷‍♂️.
+
