@@ -93,6 +93,25 @@ func generateSchema(t reflect.Type, stopRecursion bool) *SchemaRef {
 		for i := range t.NumField() {
 			field := t.Field(i)
 
+			if field.Anonymous {
+				fieldType := field.Type
+				for fieldType.Kind() == reflect.Pointer {
+					fieldType = fieldType.Elem()
+				}
+
+				if fieldType.Kind() == reflect.Struct {
+					subSchema := generateSchema(fieldType, false)
+					if subSchema != nil && subSchema.Value != nil {
+						for name, prop := range subSchema.Value.Properties {
+							if _, ok := schema.Properties[name]; !ok {
+								schema.Properties[name] = prop
+							}
+						}
+					}
+					continue
+				}
+			}
+
 			jsonTag, jsonTagExists := field.Tag.Lookup("json")
 			if jsonTag == "-" {
 				continue
