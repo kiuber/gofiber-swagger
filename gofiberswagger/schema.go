@@ -510,7 +510,7 @@ func getDefaultSchema(t reflect.Type) *Schema {
 		schema.Max = &maxFloat32
 		schema.ExclusiveMin = false
 		schema.ExclusiveMax = false
-		schema.Default = 0
+		schema.Default = &minFloat64
 	case reflect.Float64:
 		schema.Type = &Types{"number"}
 		schema.Format = "double"
@@ -518,7 +518,7 @@ func getDefaultSchema(t reflect.Type) *Schema {
 		schema.Max = &maxFloat64
 		schema.ExclusiveMin = false
 		schema.ExclusiveMax = false
-		schema.Default = 0
+		schema.Default = &minFloat64
 
 	case reflect.String:
 		schema.Type = &Types{"string"}
